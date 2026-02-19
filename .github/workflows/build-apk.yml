@@ -35,12 +35,23 @@ jobs:
 
       - name: Override icons with custom logo
         run: |
-          for folder in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
-            cp -v android-icons/$folder/ic_launcher.png android/app/src/main/res/$folder/ic_launcher.png
-            cp -v android-icons/$folder/ic_launcher_round.png android/app/src/main/res/$folder/ic_launcher_round.png
-            cp -v android-icons/$folder/ic_launcher_foreground.png android/app/src/main/res/$folder/ic_launcher_foreground.png
-          done
-          echo "Icons overridden."
+          pip install Pillow --break-system-packages -q
+          python3 -c "
+          from PIL import Image
+          import os
+          sizes = {'mipmap-mdpi':48,'mipmap-hdpi':72,'mipmap-xhdpi':96,'mipmap-xxhdpi':144,'mipmap-xxxhdpi':192}
+          img = Image.open('www/icon-512.png').convert('RGBA')
+          for folder, size in sizes.items():
+              path = f'android/app/src/main/res/{folder}'
+              os.makedirs(path, exist_ok=True)
+              bg = Image.new('RGBA', (size,size), (14,15,17,255))
+              bg.paste(img.resize((size,size), Image.LANCZOS), (0,0), img.resize((size,size), Image.LANCZOS))
+              out = bg.convert('RGB')
+              out.save(f'{path}/ic_launcher.png')
+              out.save(f'{path}/ic_launcher_round.png')
+              out.save(f'{path}/ic_launcher_foreground.png')
+              print(f'Done {folder}')
+          "
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
