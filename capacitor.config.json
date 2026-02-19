@@ -1,0 +1,11 @@
+{
+  "appId": "com.jaysmiles.regaliarecords",
+  "appName": "Regalia Records",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
