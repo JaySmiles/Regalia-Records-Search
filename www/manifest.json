@@ -1,6 +1,6 @@
 {
-  "name": "TKN Lookup",
-  "short_name": "TKN Lookup",
+  "name": "Regalia Records Search",
+  "short_name": "Regalia Records Search",
   "description": "Search student names and copy TKN IDs",
   "start_url": "/",
   "display": "standalone",
