@@ -47,6 +47,7 @@
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
+    justify-content: center;
   }
 
   header img.logo {
@@ -572,6 +573,8 @@
     width: auto;
     height: auto;
     object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.2s;
   }
 
   /* Keep app hidden until splash done */
@@ -952,6 +955,11 @@
 
   // Dismiss when video ends
   splashVideo.addEventListener('ended', dismissSplash);
+
+  // Show video only once it's ready to play
+  splashVideo.addEventListener('canplay', () => {
+    splashVideo.style.opacity = '1';
+  });
 
   // Fallback: dismiss after 6s in case video stalls
   setTimeout(dismissSplash, 6000);
