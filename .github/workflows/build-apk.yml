@@ -27,6 +27,16 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Bundle XLSX library offline
+        run: |
+          curl -L "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" -o www/xlsx.full.min.js
+          echo "XLSX bundled: $(wc -c < www/xlsx.full.min.js) bytes"
+
+      - name: Remove Google Fonts dependency
+        run: |
+          sed -i 's|<link href="https://fonts.googleapis.com[^"]*">||g' www/index.html
+          echo "Google Fonts removed."
+
       - name: Add Android platform
         run: npx cap add android
 
@@ -65,5 +75,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Regalia-Records-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/Regalia-Records.apk
           retention-days: 30
