@@ -33,6 +33,15 @@ jobs:
       - name: Sync web assets
         run: npx cap sync android
 
+      - name: Override icons with custom logo
+        run: |
+          for folder in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            cp -v android-icons/$folder/ic_launcher.png android/app/src/main/res/$folder/ic_launcher.png
+            cp -v android-icons/$folder/ic_launcher_round.png android/app/src/main/res/$folder/ic_launcher_round.png
+            cp -v android-icons/$folder/ic_launcher_foreground.png android/app/src/main/res/$folder/ic_launcher_foreground.png
+          done
+          echo "Icons overridden."
+
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
