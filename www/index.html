@@ -1553,62 +1553,79 @@
     `).join('');
   }
 
-  // ── Form submission via hidden iframe ──
-  // fetch() with no-cors mangles the request regardless of encoding method.
-  // A real HTML form POST via a hidden iframe bypasses all of that —
-  // the browser constructs and sends the request natively, exactly as
-  // Google Forms expects. The iframe swallows the CORS response silently.
+  // ── Form Submission ──
+  // Primary: @capacitor-community/http — makes a true native HTTP request
+  // outside the WebView, bypassing all CORS/no-cors WebView restrictions.
+  // Fallback: hidden iframe form POST for browser/preview environments.
+
   function submitViaIframe(url, obj) {
-    return new Promise((resolve) => {
-      // Remove any previous submission iframe
-      const old = document.getElementById('_gf_iframe');
-      if (old) old.remove();
-      const oldForm = document.getElementById('_gf_form');
-      if (oldForm) oldForm.remove();
-
-      const iframe = document.createElement('iframe');
-      iframe.id = '_gf_iframe';
-      iframe.name = '_gf_iframe';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-
-      const form = document.createElement('form');
-      form.id = '_gf_form';
-      form.method = 'POST';
-      form.action = url;
-      form.target = '_gf_iframe';
-      form.style.display = 'none';
-
-      Object.entries(obj).forEach(([k, v]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = k;
-        input.value = v;
-        form.appendChild(input);
-      });
-
-      document.body.appendChild(form);
-
-      // Resolve after a short delay — iframe load fires even on CORS error,
-      // and Google Forms processes the submission before redirecting.
-      iframe.onload = () => { setTimeout(() => resolve(true), 300); };
-      iframe.onerror = () => resolve(false);
-
-      form.submit();
-
-      // Safety timeout — resolve after 10s regardless
-      setTimeout(() => resolve(true), 10000);
+    // Clean up any previous submission elements
+    ['_gf_iframe', '_gf_form'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
     });
+
+    const iframe = document.createElement('iframe');
+    iframe.id = '_gf_iframe';
+    iframe.name = '_gf_iframe';
+    iframe.style.cssText = 'display:none;position:absolute;width:0;height:0;';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.id = '_gf_form';
+    form.method = 'POST';
+    form.action = url;
+    form.target = '_gf_iframe';
+    form.style.display = 'none';
+
+    Object.entries(obj).forEach(([k, v]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = k;
+      input.value = v;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    // Remove form immediately after submit — iframe stays to receive response
+    setTimeout(() => { form.remove(); }, 500);
+    // Consider sent after 3s — enough for Google to process
+    return new Promise(resolve => setTimeout(() => resolve(true), 3000));
+  }
+
+  async function submitViaCapacitorHttp(url, obj) {
+    try {
+      const Http = window.Capacitor?.Plugins?.CapacitorHttp || window.CapacitorHttp;
+      if (!Http) return null; // not available, fall through to iframe
+
+      const body = new URLSearchParams(obj).toString();
+      await Http.request({
+        method: 'POST',
+        url,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        data: body,
+      });
+      return true;
+    } catch(e) {
+      return false;
+    }
   }
 
   async function attemptPost(url, obj) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const ok = await Promise.race([
-          submitViaIframe(url, obj),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000))
-        ]);
-        if (ok) return true;
+        // Try Capacitor native HTTP first (bypasses WebView CORS entirely)
+        const nativeResult = await submitViaCapacitorHttp(url, obj);
+        if (nativeResult === true) return true;
+        if (nativeResult === false) {
+          // Native HTTP available but failed — retry
+          if (attempt === 2) return false;
+          await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+        // nativeResult === null means plugin not available — use iframe
+        return await submitViaIframe(url, obj);
       } catch(e) {
         if (attempt === 2) return false;
         await new Promise(r => setTimeout(r, 1000));
