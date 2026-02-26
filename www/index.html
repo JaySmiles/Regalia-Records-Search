@@ -1335,16 +1335,14 @@
   }
 
 
-  // ── Android Back Button ──
+  // ── Navigation ──
   let currentScreen = 'home';
 
   function goTo(screen) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + screen).classList.add('active');
     window.scrollTo(0, 0);
-    if (screen !== 'home') {
-      history.pushState({ screen }, '', '');
-    } else {
+    if (screen === 'home') {
       releaseWakeLock();
     }
     currentScreen = screen;
@@ -1353,11 +1351,28 @@
     updateQueueUI();
   }
 
-  window.addEventListener('popstate', function(e) {
-    if (currentScreen !== 'home') {
-      goTo('home');
+  // ── Android Back Button via Capacitor App plugin ──
+  // Wait for Capacitor to be ready, then register the back button handler
+  function setupBackButton() {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+      window.Capacitor.Plugins.App.addListener('backButton', () => {
+        if (currentScreen !== 'home') {
+          goTo('home');
+        } else {
+          // On home screen — exit the app
+          window.Capacitor.Plugins.App.exitApp();
+        }
+      });
+    } else {
+      // Fallback for non-Capacitor environments (browser preview)
+      window.addEventListener('popstate', () => {
+        if (currentScreen !== 'home') goTo('home');
+      });
     }
-  });
+  }
+
+  // Run after DOM is ready
+  document.addEventListener('DOMContentLoaded', setupBackButton);
 
 
   // ── File Loading ──
@@ -1538,24 +1553,22 @@
     `).join('');
   }
 
-  // ── Form POST with timeout + retry ──
+  // ── Form submission via GET with query params ──
+  // Google Forms reliably accepts GET requests with entry fields as query params.
+  // POST with no-cors strips headers making body encoding unpredictable.
+  // GET avoids the content-type issue entirely and works consistently.
   async function attemptPost(url, obj) {
-    // URLSearchParams sends as application/x-www-form-urlencoded automatically,
-    // which is what Google Forms requires. FormData sends as multipart which
-    // Google Forms ignores, leaving all fields blank.
-    const body = new URLSearchParams(obj).toString();
+    const params = new URLSearchParams(obj).toString();
+    const fullUrl = url + '?' + params;
 
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 8000);
-        await fetch(url, {
-          method: 'POST',
+        await fetch(fullUrl, {
+          method: 'GET',
           mode: 'no-cors',
-          body,
           signal: controller.signal
-          // No Content-Type header — no-cors strips custom headers anyway,
-          // and the browser sets the correct one automatically for string bodies
         });
         clearTimeout(timer);
         return true;
