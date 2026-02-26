@@ -742,6 +742,162 @@
 
   .ghost-btn:hover { border-color: var(--danger); color: var(--danger); }
 
+
+  /* ── Offline / Queue ── */
+  .warning-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(14,15,17,0.93);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    padding: 28px;
+    text-align: center;
+  }
+  .warning-overlay.visible { opacity: 1; pointer-events: all; }
+
+  .warning-icon {
+    width: 68px; height: 68px;
+    background: #d97706;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .warning-name { font-size: 1.3rem; font-weight: 700; }
+  .warning-label { font-size: 0.83rem; color: #fbbf24; max-width: 280px; line-height: 1.5; }
+
+  .success-meta {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    text-align: center;
+    max-width: 320px;
+    line-height: 1.6;
+  }
+
+  .queue-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #d97706;
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    position: absolute;
+    top: -6px;
+    right: -6px;
+  }
+
+  .home-card-inner { position: relative; display: flex; align-items: center; gap: 18px; width: 100%; }
+
+  .queue-screen-btn {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    background: #d97706;
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 18px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    gap: 7px;
+    align-items: center;
+    box-shadow: 0 4px 16px rgba(217,119,6,0.4);
+    z-index: 100;
+    font-family: inherit;
+  }
+  .queue-screen-btn.visible { display: flex; }
+
+  /* Queue Screen */
+  .queue-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    animation: fadeIn 0.15s ease;
+  }
+
+  .queue-item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .queue-item-name { font-weight: 600; font-size: 0.92rem; }
+  .queue-item-meta { font-size: 0.72rem; color: var(--muted); font-family: 'IBM Plex Mono', monospace; line-height: 1.6; }
+
+  .queue-item-type {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--gold-dim);
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .queue-delete-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    align-self: flex-start;
+  }
+  .queue-delete-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  .retry-all-btn {
+    background: #d97706;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    font-family: inherit;
+    transition: opacity 0.2s;
+  }
+  .retry-all-btn:hover { opacity: 0.85; }
+
+  .empty-queue { text-align: center; color: var(--muted); padding: 48px 20px; font-size: 0.88rem; }
+
+  .online-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-dot.online { background: #22c55e; }
+  .status-dot.offline { background: #d97706; }
+
   /* ── Splash ── */
   #splash {
     position: fixed;
@@ -802,7 +958,10 @@
         <h2>Check-in</h2>
         <p>Register in-person attendance</p>
       </div>
-      <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      <div style="position:relative;margin-left:auto;flex-shrink:0;">
+        <span class="queue-badge" id="checkin-queue-badge" style="display:none"></span>
+      </div>
+      <svg class="home-card-arrow" style="margin-left:4px;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
     </div>
 
     <div class="home-card disabled" id="card-stream" onclick="goTo('stream')">
@@ -811,7 +970,10 @@
         <h2>Stream</h2>
         <p>Register online attendance</p>
       </div>
-      <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      <div style="position:relative;margin-left:auto;flex-shrink:0;">
+        <span class="queue-badge" id="stream-queue-badge" style="display:none"></span>
+      </div>
+      <svg class="home-card-arrow" style="margin-left:4px;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
     </div>
 
     <div class="home-card" onclick="goTo('records')">
@@ -1050,6 +1212,7 @@
   </div>
   <div class="success-name" id="ci-success-name"></div>
   <div class="success-label">Checked in successfully ✓</div>
+  <div class="success-meta" id="ci-success-meta"></div>
 </div>
 
 <div class="success-overlay" id="stream-success">
@@ -1058,6 +1221,7 @@
   </div>
   <div class="success-name" id="st-success-name"></div>
   <div class="success-label">Registered for stream</div>
+  <div class="success-meta" id="st-success-meta"></div>
   <div class="zoom-card">
     <div class="zoom-card-label">Zoom Link — tap to open</div>
     <a href="https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09" target="_blank" style="color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:0.74px;word-break:break-all;line-height:1.5;text-decoration:underline;font-size:0.78rem;">
@@ -1066,6 +1230,66 @@
   </div>
   <button class="next-btn" onclick="resetStream()">Next Person</button>
 </div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- QUEUE SCREEN                          -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-queue">
+  <div class="app-header">
+    <button class="back-btn" onclick="goTo('home')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
+    </button>
+    <img class="logo" src="logo.png" alt="Regalia Records">
+  </div>
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-weight:700;font-size:1.05rem;margin-bottom:4px;">Pending Submissions</div>
+        <div class="online-status" id="queue-status">
+          <div class="status-dot" id="queue-status-dot"></div>
+          <span id="queue-status-text"></span>
+        </div>
+      </div>
+      <button class="retry-all-btn" style="width:auto;padding:10px 18px;font-size:0.82rem;" onclick="flushQueue()">Retry Now</button>
+    </div>
+    <div id="queue-list"></div>
+  </div>
+</div>
+
+<!-- Offline warning overlays -->
+<div class="warning-overlay" id="checkin-warning">
+  <div class="warning-icon">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  </div>
+  <div class="warning-name" id="ci-warning-name"></div>
+  <div class="warning-label">No connection — saved to queue and will be sent when you're back online</div>
+  <div class="success-meta" id="ci-warning-meta"></div>
+  <button class="next-btn" onclick="document.getElementById('checkin-warning').classList.remove('visible')">OK</button>
+</div>
+
+<div class="warning-overlay" id="stream-warning">
+  <div class="warning-icon">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  </div>
+  <div class="warning-name" id="st-warning-name"></div>
+  <div class="warning-label">No connection — saved to queue and will be sent when you're back online</div>
+  <div class="success-meta" id="st-warning-meta"></div>
+  <div class="zoom-card" style="margin-top:4px;">
+    <div class="zoom-card-label">Zoom Link — tap to open</div>
+    <a href="https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09" target="_blank" style="color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;word-break:break-all;line-height:1.5;text-decoration:underline;">
+      https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09
+    </a>
+  </div>
+  <button class="next-btn" onclick="document.getElementById('stream-warning').classList.remove('visible');resetStream()">Next Person</button>
+</div>
+
+<!-- Queue FAB -->
+<button class="queue-screen-btn" id="queue-fab" onclick="goTo('queue')">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+  <span id="queue-fab-count">0</span> pending
+</button>
+
 
 <script>
   // ── Constants ──
@@ -1088,6 +1312,9 @@
     loadFromStorage();
     updateHomeCards();
     checkSavedBanner();
+    updateQueueUI();
+    // Flush queue on launch if online
+    if (navigator.onLine) flushQueue();
   });
 
   function loadFromStorage() {
@@ -1117,8 +1344,13 @@
     window.scrollTo(0, 0);
     if (screen !== 'home') {
       history.pushState({ screen }, '', '');
+    } else {
+      releaseWakeLock();
     }
     currentScreen = screen;
+    if (screen === 'checkin' || screen === 'stream') requestWakeLock();
+    if (screen === 'queue') renderQueueScreen();
+    updateQueueUI();
   }
 
   window.addEventListener('popstate', function(e) {
@@ -1223,31 +1455,181 @@
       document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.classList.remove('visible'));
   });
 
-  // ── Form POST ──
-  async function postForm(url, obj) {
-    try {
-      const fd = new FormData();
-      Object.entries(obj).forEach(([k, v]) => fd.append(k, v));
-      await fetch(url, { method: 'POST', mode: 'no-cors', body: fd });
-    } catch(e) {}
+  // ── UUID + Time ──
+  function genUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
   }
+
+  function fmtTime(iso) {
+    return new Date(iso).toLocaleString(undefined, { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  // ── Offline Queue ──
+  const QUEUE_KEY = 'regalia_queue_v1';
+
+  function getQueue() {
+    try { return JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; } catch(e) { return []; }
+  }
+
+  function saveQueue(q) {
+    try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch(e) {}
+  }
+
+  function addToQueue(item) {
+    const q = getQueue();
+    q.push(item);
+    saveQueue(q);
+    updateQueueUI();
+  }
+
+  function removeFromQueue(id) {
+    saveQueue(getQueue().filter(i => i.id !== id));
+    updateQueueUI();
+    renderQueueScreen();
+  }
+
+  function updateQueueUI() {
+    const q = getQueue();
+    const total = q.length;
+    const ci = q.filter(i => i.form === 'checkin').length;
+    const st = q.filter(i => i.form === 'stream').length;
+
+    const fab = document.getElementById('queue-fab');
+    const fabCount = document.getElementById('queue-fab-count');
+    if (fab) { fab.classList.toggle('visible', total > 0); if (fabCount) fabCount.textContent = total; }
+
+    const ciBadge = document.getElementById('checkin-queue-badge');
+    const stBadge = document.getElementById('stream-queue-badge');
+    if (ciBadge) { ciBadge.style.display = ci > 0 ? 'flex' : 'none'; ciBadge.textContent = ci; }
+    if (stBadge) { stBadge.style.display = st > 0 ? 'flex' : 'none'; stBadge.textContent = st; }
+  }
+
+  function renderQueueScreen() {
+    const q = getQueue();
+    const list = document.getElementById('queue-list');
+    const dot = document.getElementById('queue-status-dot');
+    const txt = document.getElementById('queue-status-text');
+    const online = navigator.onLine;
+    if (dot) { dot.className = 'status-dot ' + (online ? 'online' : 'offline'); }
+    if (txt) txt.textContent = online ? 'Online' : 'Offline';
+
+    if (!list) return;
+    if (!q.length) {
+      list.innerHTML = '<div class="empty-queue">No pending submissions — all clear ✓</div>';
+      return;
+    }
+    list.innerHTML = q.map(item => `
+      <div class="queue-item">
+        <div class="queue-item-header">
+          <div>
+            <div class="queue-item-name">${item.name}</div>
+            <span class="queue-item-type">${item.form === 'checkin' ? 'In-Person' : 'Stream'} · ${item.mode}</span>
+          </div>
+          <button class="queue-delete-btn" onclick="removeFromQueue('${item.id}')">Delete</button>
+        </div>
+        <div class="queue-item-meta">
+          🕐 ${fmtTime(item.timestamp)}<br>
+          ID: ${item.id}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── Form POST with timeout + retry ──
+  async function attemptPost(url, obj) {
+    // URLSearchParams sends as application/x-www-form-urlencoded automatically,
+    // which is what Google Forms requires. FormData sends as multipart which
+    // Google Forms ignores, leaving all fields blank.
+    const body = new URLSearchParams(obj).toString();
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          body,
+          signal: controller.signal
+          // No Content-Type header — no-cors strips custom headers anyway,
+          // and the browser sets the correct one automatically for string bodies
+        });
+        clearTimeout(timer);
+        return true;
+      } catch(e) {
+        if (attempt === 2) return false;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    return false;
+  }
+
+  async function flushQueue() {
+    if (!navigator.onLine) return;
+    const q = getQueue();
+    if (!q.length) return;
+    const urlMap = { checkin: CHECKIN_URL, stream: STREAM_URL };
+    for (const item of q) {
+      const ok = await attemptPost(urlMap[item.form], item.fields);
+      if (ok) removeFromQueue(item.id);
+    }
+  }
+
+  // Listen for coming back online
+  window.addEventListener('online', () => {
+    flushQueue();
+    updateQueueUI();
+    if (currentScreen === 'queue') renderQueueScreen();
+  });
+
+  window.addEventListener('offline', () => {
+    updateQueueUI();
+    if (currentScreen === 'queue') renderQueueScreen();
+  });
 
   // ── Check-in Submit ──
   async function submitCheckin(mode) {
-    let name, body;
+    let name, fields;
+    const timestamp = new Date().toISOString();
+    const id = genUUID();
+
     if (mode === 'member') {
       if (!checkinSelected) return;
       name = checkinSelected.name;
-      body = { 'entry.336694999':'Member', 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn };
+      fields = { 'entry.336694999':'Member', 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn };
     } else {
       name = document.getElementById('ci-v-name').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      body = { 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() };
+      fields = { 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() };
     }
-    await postForm(CHECKIN_URL, body);
+
+    const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
+    resetCheckin();
+
+    if (!navigator.onLine) {
+      addToQueue({ id, form:'checkin', mode, name, fields, timestamp });
+      document.getElementById('ci-warning-name').textContent = name;
+      document.getElementById('ci-warning-meta').textContent = metaText;
+      document.getElementById('checkin-warning').classList.add('visible');
+      return;
+    }
+
+    const ok = await attemptPost(CHECKIN_URL, fields);
+    if (!ok) {
+      addToQueue({ id, form:'checkin', mode, name, fields, timestamp });
+      document.getElementById('ci-warning-name').textContent = name;
+      document.getElementById('ci-warning-meta').textContent = metaText;
+      document.getElementById('checkin-warning').classList.add('visible');
+      return;
+    }
+
     document.getElementById('ci-success-name').textContent = name;
+    document.getElementById('ci-success-meta').textContent = metaText;
     document.getElementById('checkin-success').classList.add('visible');
-    setTimeout(() => { document.getElementById('checkin-success').classList.remove('visible'); resetCheckin(); }, 2500);
+    setTimeout(() => { document.getElementById('checkin-success').classList.remove('visible'); }, 2500);
   }
 
   function resetCheckin() {
@@ -1263,18 +1645,43 @@
 
   // ── Stream Submit ──
   async function submitStream(mode) {
-    let name, body;
+    let name, fields;
+    const timestamp = new Date().toISOString();
+    const id = genUUID();
+
     if (mode === 'member') {
       if (!streamSelected) return;
       name = streamSelected.name;
-      body = { 'entry.336694999':'Member', 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn };
+      fields = { 'entry.336694999':'Member', 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn };
     } else {
       name = document.getElementById('st-v-name').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      body = { 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() };
+      fields = { 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() };
     }
-    await postForm(STREAM_URL, body);
+
+    const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
+
+    if (!navigator.onLine) {
+      addToQueue({ id, form:'stream', mode, name, fields, timestamp });
+      document.getElementById('st-warning-name').textContent = name;
+      document.getElementById('st-warning-meta').textContent = metaText;
+      document.getElementById('stream-warning').classList.add('visible');
+      resetStream();
+      return;
+    }
+
+    const ok = await attemptPost(STREAM_URL, fields);
+    if (!ok) {
+      addToQueue({ id, form:'stream', mode, name, fields, timestamp });
+      document.getElementById('st-warning-name').textContent = name;
+      document.getElementById('st-warning-meta').textContent = metaText;
+      document.getElementById('stream-warning').classList.add('visible');
+      resetStream();
+      return;
+    }
+
     document.getElementById('st-success-name').textContent = name;
+    document.getElementById('st-success-meta').textContent = metaText;
     document.getElementById('stream-success').classList.add('visible');
   }
 
@@ -1472,6 +1879,29 @@
       }, 1800);
     });
   }
+
+
+  // ── Wake Lock ──
+  let wakeLock = null;
+
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+      }
+    } catch(e) {}
+  }
+
+  function releaseWakeLock() {
+    try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch(e) {}
+  }
+
+  // Re-acquire wake lock if screen was hidden and we're back on checkin/stream
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && (currentScreen === 'checkin' || currentScreen === 'stream')) {
+      requestWakeLock();
+    }
+  });
 
   // ── Splash ──
   const splash = document.getElementById('splash');
