@@ -1558,8 +1558,18 @@
   // outside the WebView, bypassing all CORS/no-cors WebView restrictions.
   // Fallback: hidden iframe form POST for browser/preview environments.
 
+  // ── Debug toast (remove after confirming submissions work) ──
+  function dbg(msg, color) {
+    color = color || '#d4af37';
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:${80 + document.querySelectorAll('.dbg-toast').length * 52}px;left:50%;transform:translateX(-50%);background:#1e2028;border:1px solid ${color};color:${color};font-family:monospace;font-size:0.7rem;padding:8px 14px;border-radius:8px;z-index:9000;max-width:90vw;word-break:break-all;`;
+    t.className = 'dbg-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 8000);
+  }
+
   function submitViaIframe(url, obj) {
-    // Clean up any previous submission elements
     ['_gf_iframe', '_gf_form'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.remove();
@@ -1587,52 +1597,57 @@
     });
 
     document.body.appendChild(form);
+    const bodyStr = Object.entries(obj).map(([k,v]) => k+'='+v).join(' | ');
+    dbg('IFRAME POST: ' + bodyStr, '#00e5c0');
     form.submit();
-    // Remove form immediately after submit — iframe stays to receive response
     setTimeout(() => { form.remove(); }, 500);
-    // Consider sent after 3s — enough for Google to process
     return new Promise(resolve => setTimeout(() => resolve(true), 3000));
   }
 
   async function submitViaCapacitorHttp(url, obj) {
     try {
       const Http = window.Capacitor?.Plugins?.CapacitorHttp || window.CapacitorHttp;
-      if (!Http) return null; // not available, fall through to iframe
+      if (!Http) {
+        dbg('CapacitorHttp: NOT AVAILABLE — using iframe', '#d4af37');
+        return null;
+      }
+      dbg('CapacitorHttp: plugin found, sending...', '#d4af37');
 
-      // MUST be a plain string — CapacitorHttp serializes objects as JSON
-      // which Google Forms does not accept, producing blank rows.
       const data = Object.entries(obj)
         .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
         .join('&');
 
-      await Http.request({
+      dbg('DATA: ' + data.slice(0, 120), '#d4af37');
+
+      const res = await Http.request({
         method: 'POST',
         url,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        data, // plain string, not object or URLSearchParams
+        data,
       });
+      dbg('CapacitorHttp: status=' + res.status, res.status === 200 ? '#22c55e' : '#ff4d6d');
       return true;
     } catch(e) {
-      console.error('CapacitorHttp error:', e);
+      dbg('CapacitorHttp ERROR: ' + e.message, '#ff4d6d');
       return false;
     }
   }
 
   async function attemptPost(url, obj) {
+    dbg('attemptPost called, fields: ' + Object.keys(obj).join(', '));
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        // Try Capacitor native HTTP first (bypasses WebView CORS entirely)
         const nativeResult = await submitViaCapacitorHttp(url, obj);
         if (nativeResult === true) return true;
         if (nativeResult === false) {
-          // Native HTTP available but failed — retry
           if (attempt === 2) return false;
           await new Promise(r => setTimeout(r, 1000));
           continue;
         }
-        // nativeResult === null means plugin not available — use iframe
+        // null = plugin not available, use iframe
         return await submitViaIframe(url, obj);
       } catch(e) {
+        dbg('attemptPost catch: ' + e.message, '#ff4d6d');
         if (attempt === 2) return false;
         await new Promise(r => setTimeout(r, 1000));
       }
