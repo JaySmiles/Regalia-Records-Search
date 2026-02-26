@@ -1599,15 +1599,21 @@
       const Http = window.Capacitor?.Plugins?.CapacitorHttp || window.CapacitorHttp;
       if (!Http) return null; // not available, fall through to iframe
 
-      const body = new URLSearchParams(obj).toString();
+      // MUST be a plain string — CapacitorHttp serializes objects as JSON
+      // which Google Forms does not accept, producing blank rows.
+      const data = Object.entries(obj)
+        .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
+        .join('&');
+
       await Http.request({
         method: 'POST',
         url,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        data: body,
+        data, // plain string, not object or URLSearchParams
       });
       return true;
     } catch(e) {
+      console.error('CapacitorHttp error:', e);
       return false;
     }
   }
@@ -1678,11 +1684,11 @@
     if (mode === 'member') {
       if (!checkinSelected) return;
       name = checkinSelected.name;
-      fields = { 'entry.336694999':'Member', 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn };
+      fields = { 'entry.336694999':'Member', 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn, 'entry.1242330493':'', 'entry.1740110440':'', 'entry.1351021626':'' };
     } else {
       name = document.getElementById('ci-v-name').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      fields = { 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() };
+      fields = { 'entry.336694999':'Visitor', 'entry.481330014':'', 'entry.561268821':'', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() };
     }
 
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
@@ -1731,11 +1737,11 @@
     if (mode === 'member') {
       if (!streamSelected) return;
       name = streamSelected.name;
-      fields = { 'entry.336694999':'Member', 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn };
+      fields = { 'entry.336694999':'Member', 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn, 'entry.1242330493':'', 'entry.1740110440':'', 'entry.1351021626':'' };
     } else {
       name = document.getElementById('st-v-name').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      fields = { 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() };
+      fields = { 'entry.336694999':'Visitor', 'entry.481330014':'', 'entry.561268821':'', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() };
     }
 
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
