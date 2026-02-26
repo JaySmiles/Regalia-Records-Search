@@ -24,9 +24,12 @@
     --border: #2a2d38;
     --accent: #00e5c0;
     --accent-dim: rgba(0,229,192,0.12);
+    --gold: #d4af37;
+    --gold-dim: rgba(212,175,55,0.15);
     --text: #e8eaf0;
     --muted: #6b7080;
     --danger: #ff4d6d;
+    --success: #22c55e;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,411 +37,318 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
   }
 
-  header {
+  .screen { display: none; width: 100%; flex-direction: column; align-items: center; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ── Header ── */
+  .app-header {
     width: 100%;
-    padding: 12px 32px;
+    padding: 12px 20px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  header img.logo {
-    height: 56px;
-    width: auto;
-    display: block;
-  }
-
-  .container {
-    width: 100%;
-    max-width: 820px;
-    padding: 40px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-  }
-
-  /* Upload Zone */
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    padding: 48px 32px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--surface);
     position: relative;
-  }
-
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-  }
-
-  .upload-zone input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-
-  .upload-icon {
-    font-size: 2.2rem;
-    margin-bottom: 12px;
-    display: block;
-  }
-
-  .upload-zone h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-
-  .upload-zone p {
-    font-size: 0.82rem;
-    color: var(--muted);
-  }
-
-  /* Column Mapper */
-  .mapper {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 28px;
-    display: none;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .mapper.visible { display: flex; }
-
-  .mapper h3 {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.78rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-
-  .mapper-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-
-  .mapper-field label {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 8px;
-  }
-
-  .mapper-field select {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.88rem;
-    outline: none;
-    transition: border-color 0.2s;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7080' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 32px;
-  }
-
-  .mapper-field select:focus { border-color: var(--accent); }
-
-  .load-btn {
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 28px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.88rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    align-self: flex-end;
-    transition: opacity 0.2s, transform 0.1s;
-  }
-
-  .load-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-  .load-btn:active { transform: translateY(0); }
-
-  /* Search */
-  .search-section {
-    display: none;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .search-section.visible { display: flex; }
-
-  .search-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .db-stats {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-
-  .db-stats span { color: var(--accent); }
-
-  .reset-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--muted);
-    font-size: 0.75rem;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'IBM Plex Sans', sans-serif;
-  }
-
-  .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
-
-  .save-bar {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .save-bar-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .save-bar-left svg { color: var(--accent); flex-shrink: 0; }
-
-  .save-bar p {
-    font-size: 0.82rem;
-    color: var(--muted);
-  }
-
-  .save-bar p strong {
-    color: var(--text);
-    font-weight: 600;
-    display: block;
-    margin-bottom: 2px;
-    font-size: 0.85rem;
-  }
-
-  .save-btn {
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 7px;
-    padding: 9px 18px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-    white-space: nowrap;
     flex-shrink: 0;
   }
 
-  .save-btn:hover { opacity: 0.85; }
-  .save-btn:disabled { opacity: 0.4; cursor: default; }
+  .app-header img.logo { height: 48px; width: auto; display: block; }
 
-  .saved-badge {
-    display: inline-flex;
+  .back-btn {
+    position: absolute;
+    left: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
     align-items: center;
     gap: 5px;
-    background: var(--accent-dim);
-    color: var(--accent);
-    border-radius: 5px;
-    padding: 4px 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    font-size: 0.82rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: color 0.2s;
+    font-family: inherit;
+  }
+  .back-btn:hover { color: var(--text); }
+
+  .container {
+    width: 100%;
+    max-width: 600px;
+    padding: 24px 18px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
   }
 
-  /* Saved DB banner on upload screen */
-  .saved-db-banner {
+  /* ── HOME ── */
+  .home-logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 24px;
+    width: 100%;
+  }
+
+  .home-logo-wrap img { width: min(300px, 75vw); height: auto; }
+
+  .home-cards {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 18px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .home-card {
     background: var(--surface);
     border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--gold-dim), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .home-card:hover::before { opacity: 1; }
+  .home-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .home-card:active { transform: translateY(0); }
+
+  .home-card.disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .home-card-icon { font-size: 1.8rem; flex-shrink: 0; }
+
+  .home-card-text h2 { font-size: 1.05rem; font-weight: 700; color: var(--gold); margin-bottom: 3px; }
+  .home-card-text p { font-size: 0.8rem; color: var(--muted); }
+  .home-card-arrow { margin-left: auto; color: var(--gold); flex-shrink: 0; }
+
+  .no-records-prompt {
+    background: var(--surface2);
+    border: 1px solid var(--gold);
     border-radius: 12px;
-    padding: 20px 24px;
+    padding: 14px 16px;
     display: none;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 18px;
   }
 
-  .saved-db-banner.visible { display: flex; }
+  .no-records-prompt p { font-size: 0.8rem; color: var(--muted); flex: 1; }
+  .no-records-prompt p strong { color: var(--text); display: block; margin-bottom: 2px; }
 
-  .saved-db-info { flex: 1; }
-
-  .saved-db-info h3 {
-    font-size: 0.88rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .saved-db-info p {
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-
-  .saved-db-actions {
-    display: flex;
-    gap: 10px;
-  }
-
-  .outline-btn {
-    background: none;
-    border: 1px solid var(--accent);
-    border-radius: 7px;
-    color: var(--accent);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    padding: 9px 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-
-  .outline-btn:hover { background: var(--accent-dim); }
-
-  .ghost-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    color: var(--muted);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.78rem;
+  .load-records-btn {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 8px;
     padding: 9px 14px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    position: relative;
+    display: inline-block;
+  }
+  .load-records-btn input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  /* ── Pill Toggle ── */
+  .pill-toggle {
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .pill-toggle button {
+    flex: 1;
+    background: none;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted);
     cursor: pointer;
     transition: all 0.2s;
+    font-family: inherit;
   }
 
-  .ghost-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .pill-toggle button.active { background: var(--gold); color: #000; }
 
-  .search-box {
-    position: relative;
-  }
+  /* ── Search row ── */
+  .search-row { display: flex; gap: 10px; align-items: stretch; }
+
+  .search-box { position: relative; flex: 1; }
 
   .search-box input {
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 14px 18px 14px 48px;
+    padding: 13px 14px 13px 42px;
     color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 1rem;
+    font-family: inherit;
+    font-size: 0.92rem;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
 
-  .search-box input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-dim);
-  }
-
+  .search-box input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); }
   .search-box input::placeholder { color: var(--muted); }
 
   .search-icon {
     position: absolute;
-    left: 16px;
+    left: 13px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--muted);
     pointer-events: none;
   }
 
-  /* Results */
-  .results {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .result-card {
+  .update-records-btn {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 16px 20px;
+    color: var(--muted);
+    padding: 0 12px;
+    cursor: pointer;
     display: flex;
     align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+    position: relative;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+
+  .update-records-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .update-records-btn input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  /* ── Autocomplete ── */
+  .autocomplete-wrap { position: relative; flex: 1; }
+
+  .autocomplete-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    z-index: 200;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+
+  .autocomplete-dropdown.visible { display: block; }
+
+  .autocomplete-item {
+    padding: 11px 14px;
+    cursor: pointer;
+    display: flex;
     justify-content: space-between;
-    gap: 16px;
-    animation: fadeIn 0.15s ease;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover { background: var(--surface); }
+  .autocomplete-name { font-size: 0.88rem; font-weight: 600; }
+  .autocomplete-tkn { font-family: 'IBM Plex Mono', monospace; font-size: 0.76rem; color: var(--gold); flex-shrink: 0; }
+
+  /* ── Form ── */
+  .form-group { display: flex; flex-direction: column; gap: 7px; }
+
+  .form-group label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .form-field {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.92rem;
+    outline: none;
     transition: border-color 0.2s;
+    width: 100%;
   }
 
-  .result-card:hover { border-color: #3a3d4a; }
+  .form-field:focus { border-color: var(--gold); }
+  .form-field::placeholder { color: var(--muted); }
+  .form-field[readonly] { opacity: 0.65; cursor: default; }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+  .autofill-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-height: 46px;
   }
 
-  .result-info { flex: 1; min-width: 0; }
+  .autofill-name { font-weight: 600; font-size: 0.92rem; flex: 1; word-break: break-word; }
+  .autofill-placeholder { color: var(--muted); font-weight: 400; }
 
-  .result-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-    margin-bottom: 4px;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-
-  /* ── Class Badges ─────────────────────────────── */
+  /* ── Class Badges ── */
   .class-badge {
     display: inline-block;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    padding: 3px 10px;
+    padding: 3px 9px;
     border-radius: 5px;
     border: 1px solid;
-    margin-top: 5px;
+    flex-shrink: 0;
+    margin-top: 4px;
   }
 
-  .class-badge-default {
-    color: var(--muted);
-    border-color: var(--border);
-    background: transparent;
-  }
+  .class-badge-default { color: var(--muted); border-color: var(--border); background: transparent; }
 
-  /* ── Psephos: white / silver / gold animated glow ── */
   @keyframes psephos-shimmer {
     0%   { background-position: 0% 50%; }
     50%  { background-position: 100% 50%; }
@@ -451,11 +361,7 @@
   }
 
   .class-badge-psephos {
-    background: linear-gradient(
-      120deg,
-      #ffffff 0%, #d4af37 18%, #c0c0c0 35%,
-      #fffde7 50%, #c0c0c0 65%, #d4af37 82%, #ffffff 100%
-    );
+    background: linear-gradient(120deg, #ffffff 0%, #d4af37 18%, #c0c0c0 35%, #fffde7 50%, #c0c0c0 65%, #d4af37 82%, #ffffff 100%);
     background-size: 300% 300%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -464,19 +370,310 @@
     animation: psephos-shimmer 3s ease infinite, psephos-glow 2.4s ease-in-out infinite;
   }
 
-  .result-tkn {
+  /* ── Submit ── */
+  .submit-btn {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 0.98rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 4px;
+    font-family: inherit;
+  }
+
+  .submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* ── Success Overlay ── */
+  .success-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(14,15,17,0.93);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    padding: 28px;
+    text-align: center;
+  }
+
+  .success-overlay.visible { opacity: 1; pointer-events: all; }
+
+  .success-icon {
+    width: 68px; height: 68px;
+    background: var(--success);
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
     flex-shrink: 0;
   }
 
+  .success-name { font-size: 1.3rem; font-weight: 700; }
+  .success-label { font-size: 0.83rem; color: var(--muted); }
+
+  .zoom-card {
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    border-radius: 14px;
+    padding: 18px 20px;
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .zoom-card-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .zoom-link-text { font-family: 'IBM Plex Mono', monospace; font-size: 0.74rem; color: var(--gold); word-break: break-all; line-height: 1.5; }
+
+  .zoom-actions { display: flex; gap: 10px; }
+
+  .zoom-btn {
+    flex: 1;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    font-family: inherit;
+  }
+
+  .zoom-btn:hover { opacity: 0.85; }
+
+  .zoom-btn.outline {
+    background: none;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+  }
+
+  .next-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    padding: 8px 22px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .next-btn:hover { border-color: var(--text); color: var(--text); }
+
+  /* ── Records Search ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 44px 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: var(--accent-dim); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+  .upload-zone h2 { font-size: 0.98rem; font-weight: 600; margin-bottom: 5px; }
+  .upload-zone p { font-size: 0.8rem; color: var(--muted); }
+
+  .mapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: none;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .mapper.visible { display: flex; }
+  .mapper h3 { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .mapper-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+  .mapper-field label { display: block; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
+
+  .mapper-field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7080' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+
+  .mapper-field select:focus { border-color: var(--accent); }
+
+  .load-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 24px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    align-self: flex-end;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .load-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  .search-header { display: flex; justify-content: space-between; align-items: center; }
+  .db-stats { font-family: 'IBM Plex Mono', monospace; font-size: 0.73rem; color: var(--muted); }
+  .db-stats span { color: var(--accent); }
+
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 0.73rem;
+    padding: 6px 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  .save-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .save-bar-left { display: flex; align-items: center; gap: 10px; }
+  .save-bar-left svg { color: var(--accent); flex-shrink: 0; }
+  .save-bar p { font-size: 0.8rem; color: var(--muted); }
+  .save-bar p strong { color: var(--text); font-weight: 600; display: block; margin-bottom: 2px; font-size: 0.83rem; }
+
+  .save-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .save-btn:hover { opacity: 0.85; }
+  .save-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .records-search-box { position: relative; }
+
+  .records-search-box input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px 13px 46px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .records-search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .records-search-box input::placeholder { color: var(--muted); }
+
+  .records-search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+
+  .filter-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  .filter-row label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .filter-row select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 28px 7px 11px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.8rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7080' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    transition: border-color 0.2s;
+  }
+
+  .filter-row select:focus { border-color: var(--accent); }
+  .result-count { font-size: 0.73rem; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+
+  .results { display: flex; flex-direction: column; gap: 8px; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    animation: fadeIn 0.15s ease;
+    transition: border-color 0.2s;
+  }
+
+  .result-card:hover { border-color: #3a3d4a; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-info { flex: 1; min-width: 0; }
+  .result-name { font-weight: 600; font-size: 0.92rem; margin-bottom: 3px; word-break: break-word; overflow-wrap: break-word; }
+  .result-tkn { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
   .tkn-value {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.88rem;
+    font-size: 0.84rem;
     color: var(--accent);
     background: var(--accent-dim);
-    padding: 6px 12px;
+    padding: 5px 11px;
     border-radius: 6px;
   }
 
@@ -486,7 +683,7 @@
     border-radius: 6px;
     color: var(--muted);
     cursor: pointer;
-    padding: 6px 8px;
+    padding: 5px 7px;
     display: flex;
     align-items: center;
     transition: all 0.2s;
@@ -496,54 +693,56 @@
   .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
   .copy-btn.copied { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
-  .no-results {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.88rem;
-    padding: 40px;
-  }
+  .no-results { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 36px; }
 
-  .filter-row {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  .filter-row label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .filter-row select {
+  .saved-db-banner {
     background: var(--surface);
     border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .saved-db-banner.visible { display: flex; }
+  .saved-db-info { flex: 1; }
+  .saved-db-info h3 { font-size: 0.85rem; font-weight: 600; margin-bottom: 3px; }
+  .saved-db-info p { font-size: 0.76rem; color: var(--muted); }
+  .saved-db-actions { display: flex; gap: 8px; }
+
+  .outline-btn {
+    background: none;
+    border: 1px solid var(--accent);
     border-radius: 7px;
-    padding: 7px 30px 7px 12px;
-    color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.82rem;
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7080' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    transition: border-color 0.2s;
-  }
-
-  .filter-row select:focus { border-color: var(--accent); }
-
-  .result-count {
-    font-size: 0.75rem;
-    color: var(--muted);
+    color: var(--accent);
     font-family: 'IBM Plex Mono', monospace;
-    padding: 4px 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
   }
 
-  /* ── Splash Screen ───────────────────────────── */
+  .outline-btn:hover { background: var(--accent-dim); }
+
+  .ghost-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .ghost-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ── Splash ── */
   #splash {
     position: fixed;
     inset: 0;
@@ -556,228 +755,561 @@
     transition: opacity 0.6s ease;
   }
 
-  #splash.fade-out {
-    opacity: 0;
-    pointer-events: none;
-  }
+  #splash.fade-out { opacity: 0; pointer-events: none; }
 
   #splash video {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
+    min-width: 100%; min-height: 100%;
+    width: auto; height: auto;
     object-fit: cover;
     opacity: 0;
     transition: opacity 0.2s;
   }
 
-  /* Keep app hidden until splash done */
-  body.splash-active header,
-  body.splash-active .container {
-    visibility: hidden;
-  }
+  body.splash-active .screen { visibility: hidden; }
 </style>
 </head>
 <body class="splash-active">
 
-<!-- Splash Screen -->
+<!-- Splash -->
 <div id="splash">
   <video id="splashVideo" src="splash.mp4" autoplay muted playsinline webkit-playsinline></video>
 </div>
 
-<header>
-  <img class="logo" src="logo.png" alt="Regalia Records">
-</header>
-
-<div class="container">
-
-  <!-- Saved DB Banner -->
-  <div class="saved-db-banner" id="savedBanner">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00e5c0" stroke-width="1.8" style="flex-shrink:0">
-      <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>
-    </svg>
-    <div class="saved-db-info">
-      <h3 id="savedBannerTitle">Saved Database</h3>
-      <p id="savedBannerMeta"></p>
-    </div>
-    <div class="saved-db-actions">
-      <button class="outline-btn" onclick="loadSavedDatabase()">Load Saved →</button>
-      <button class="ghost-btn" onclick="clearSavedDatabase()">Clear</button>
-    </div>
+<!-- ══════════════════════════════════════ -->
+<!-- HOME                                  -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen active" id="screen-home">
+  <div class="home-logo-wrap">
+    <img src="logo.png" alt="Regalia Records">
   </div>
 
-  <!-- Upload Zone -->
-  <div class="upload-zone" id="uploadZone">
-    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-    <span class="upload-icon">📂</span>
-    <h2>Drop your spreadsheet here</h2>
-    <p>Supports .xlsx, .xls, and .csv files</p>
+  <div id="no-records-prompt" class="no-records-prompt">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+    <p><strong>No records loaded</strong>Load a file to unlock Check-in and Stream.</p>
+    <label class="load-records-btn">
+      Load File
+      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleHomeFileLoad(this)">
+    </label>
   </div>
 
-  <!-- Column Mapper -->
-  <div class="mapper" id="mapper">
-    <div>
-      <h3>Map Your Columns</h3>
-      <p style="font-size:0.82rem;color:var(--muted);margin-top:4px;">Select which columns from your spreadsheet correspond to each field.</p>
+  <div class="home-cards">
+    <div class="home-card disabled" id="card-checkin" onclick="goTo('checkin')">
+      <div class="home-card-icon">✅</div>
+      <div class="home-card-text">
+        <h2>Check-in</h2>
+        <p>Register in-person attendance</p>
+      </div>
+      <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
     </div>
-    <div class="mapper-grid">
-      <div class="mapper-field">
-        <label>Name Column</label>
-        <select id="nameCol"></select>
+
+    <div class="home-card disabled" id="card-stream" onclick="goTo('stream')">
+      <div class="home-card-icon">📡</div>
+      <div class="home-card-text">
+        <h2>Stream</h2>
+        <p>Register online attendance</p>
       </div>
-      <div class="mapper-field">
-        <label>Class Column</label>
-        <select id="classCol"></select>
-      </div>
-      <div class="mapper-field">
-        <label>TKN Column</label>
-        <select id="tknCol"></select>
-      </div>
+      <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
     </div>
-    <button class="load-btn" onclick="loadDatabase()">Load Database →</button>
+
+    <div class="home-card" onclick="goTo('records')">
+      <div class="home-card-icon">🔍</div>
+      <div class="home-card-text">
+        <h2>Records Search</h2>
+        <p>Look up members and copy TKNs</p>
+      </div>
+      <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- CHECK-IN                              -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-checkin">
+  <div class="app-header">
+    <button class="back-btn" onclick="goTo('home')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
+    </button>
+    <img class="logo" src="logo.png" alt="Regalia Records">
   </div>
 
-  <!-- Search Section -->
-  <div class="search-section" id="searchSection">
-    <div class="search-header">
-      <div class="db-stats" id="dbStats"></div>
-      <button class="reset-btn" onclick="resetApp()">↩ Load New File</button>
+  <div class="container">
+    <div class="pill-toggle" id="checkin-toggle">
+      <button class="active" onclick="setMode('checkin','member')">Member</button>
+      <button onclick="setMode('checkin','visitor')">Visitor</button>
     </div>
 
-    <!-- Save Bar -->
-    <div class="save-bar" id="saveBar">
-      <div class="save-bar-left">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>
-        </svg>
-        <p><strong id="saveBarTitle">Save to browser</strong><span id="saveBarSub">Store this database locally so it reloads automatically next visit.</span></p>
+    <!-- Member -->
+    <div id="checkin-member" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="search-row">
+        <div class="autocomplete-wrap">
+          <div class="search-box">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="checkin-search" placeholder="Search by name or TKN..." autocomplete="off" oninput="showDropdown('checkin', this.value)">
+          </div>
+          <div class="autocomplete-dropdown" id="checkin-dropdown"></div>
+        </div>
+        <label class="update-records-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Update
+          <input type="file" accept=".xlsx,.xls,.csv" onchange="handleUpdateFile(this)">
+        </label>
       </div>
-      <button class="save-btn" id="saveBtn" onclick="saveDatabase()">Save Database</button>
+
+      <div class="form-group">
+        <label>Name</label>
+        <div class="autofill-row">
+          <span class="autofill-name autofill-placeholder" id="checkin-name-display">Select from search above</span>
+          <span id="checkin-badge"></span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>TKN</label>
+        <input class="form-field" type="text" id="checkin-tkn" readonly placeholder="Auto-filled">
+      </div>
+
+      <button class="submit-btn" id="checkin-member-btn" onclick="submitCheckin('member')" disabled>Submit Check-in</button>
     </div>
 
-    <div class="search-box">
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    <!-- Visitor -->
+    <div id="checkin-visitor" style="display:none;flex-direction:column;gap:16px;">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input class="form-field" type="text" id="ci-v-name" placeholder="Enter full name">
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input class="form-field" type="tel" id="ci-v-phone" placeholder="Enter phone number">
+      </div>
+      <div class="form-group">
+        <label>Who Invited You?</label>
+        <input class="form-field" type="text" id="ci-v-invited" placeholder="Enter name">
+      </div>
+      <button class="submit-btn" onclick="submitCheckin('visitor')">Submit Check-in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- STREAM                                -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-stream">
+  <div class="app-header">
+    <button class="back-btn" onclick="goTo('home')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
+    </button>
+    <img class="logo" src="logo.png" alt="Regalia Records">
+  </div>
+
+  <div class="container">
+    <div class="pill-toggle" id="stream-toggle">
+      <button class="active" onclick="setMode('stream','member')">Member</button>
+      <button onclick="setMode('stream','visitor')">Visitor</button>
+    </div>
+
+    <!-- Member -->
+    <div id="stream-member" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="search-row">
+        <div class="autocomplete-wrap">
+          <div class="search-box">
+            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="stream-search" placeholder="Search by name or TKN..." autocomplete="off" oninput="showDropdown('stream', this.value)">
+          </div>
+          <div class="autocomplete-dropdown" id="stream-dropdown"></div>
+        </div>
+        <label class="update-records-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Update
+          <input type="file" accept=".xlsx,.xls,.csv" onchange="handleUpdateFile(this)">
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>Name</label>
+        <div class="autofill-row">
+          <span class="autofill-name autofill-placeholder" id="stream-name-display">Select from search above</span>
+          <span id="stream-badge"></span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>TKN</label>
+        <input class="form-field" type="text" id="stream-tkn" readonly placeholder="Auto-filled">
+      </div>
+
+      <button class="submit-btn" id="stream-member-btn" onclick="submitStream('member')" disabled>Submit & Get Link</button>
+    </div>
+
+    <!-- Visitor -->
+    <div id="stream-visitor" style="display:none;flex-direction:column;gap:16px;">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input class="form-field" type="text" id="st-v-name" placeholder="Enter full name">
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input class="form-field" type="tel" id="st-v-phone" placeholder="Enter phone number">
+      </div>
+      <div class="form-group">
+        <label>Who Invited You?</label>
+        <input class="form-field" type="text" id="st-v-invited" placeholder="Enter name">
+      </div>
+      <button class="submit-btn" onclick="submitStream('visitor')">Submit & Get Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- RECORDS SEARCH                        -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-records">
+  <div class="app-header">
+    <button class="back-btn" onclick="goTo('home')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
+    </button>
+    <img class="logo" src="logo.png" alt="Regalia Records">
+  </div>
+
+  <div class="container">
+    <div class="saved-db-banner" id="savedBanner">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00e5c0" stroke-width="1.8" style="flex-shrink:0">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>
       </svg>
-      <input type="text" id="searchInput" placeholder="Search by name..." autocomplete="off" oninput="search()">
+      <div class="saved-db-info">
+        <h3 id="savedBannerTitle">Saved Database</h3>
+        <p id="savedBannerMeta"></p>
+      </div>
+      <div class="saved-db-actions">
+        <button class="outline-btn" onclick="loadSavedDatabase()">Load Saved →</button>
+        <button class="ghost-btn" onclick="clearSavedDatabase()">Clear</button>
+      </div>
     </div>
 
-    <div class="filter-row">
-      <label>Filter by Class:</label>
-      <select id="classFilter" onchange="search()">
-        <option value="">All Classes</option>
-      </select>
-      <div class="result-count" id="resultCount"></div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      <span class="upload-icon">📂</span>
+      <h2>Drop your spreadsheet here</h2>
+      <p>Supports .xlsx, .xls, and .csv files</p>
     </div>
 
-    <div class="results" id="results"></div>
+    <div class="mapper" id="mapper">
+      <div>
+        <h3>Map Your Columns</h3>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:4px;">Select which columns correspond to each field.</p>
+      </div>
+      <div class="mapper-grid">
+        <div class="mapper-field"><label>Name</label><select id="nameCol"></select></div>
+        <div class="mapper-field"><label>Class</label><select id="classCol"></select></div>
+        <div class="mapper-field"><label>TKN</label><select id="tknCol"></select></div>
+      </div>
+      <button class="load-btn" onclick="loadDatabase()">Load Database →</button>
+    </div>
+
+    <div id="searchSection" style="display:none;flex-direction:column;gap:18px;">
+      <div class="search-header">
+        <div class="db-stats" id="dbStats"></div>
+        <button class="reset-btn" onclick="resetRecordsSearch()">↩ Load New File</button>
+      </div>
+
+      <div class="save-bar">
+        <div class="save-bar-left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>
+          </svg>
+          <p><strong id="saveBarTitle">Save to browser</strong><span id="saveBarSub">Store this database locally.</span></p>
+        </div>
+        <button class="save-btn" id="saveBtn" onclick="saveDatabase()">Save</button>
+      </div>
+
+      <div class="records-search-box">
+        <svg class="records-search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name..." autocomplete="off" oninput="doRecordsSearch()">
+      </div>
+
+      <div class="filter-row">
+        <label>Filter by Class:</label>
+        <select id="classFilter" onchange="doRecordsSearch()"><option value="">All Classes</option></select>
+        <div class="result-count" id="resultCount"></div>
+      </div>
+
+      <div class="results" id="results"></div>
+    </div>
   </div>
+</div>
 
+<!-- ══════════════════════════════════════ -->
+<!-- SUCCESS OVERLAYS                      -->
+<!-- ══════════════════════════════════════ -->
+<div class="success-overlay" id="checkin-success">
+  <div class="success-icon">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div class="success-name" id="ci-success-name"></div>
+  <div class="success-label">Checked in successfully ✓</div>
+</div>
+
+<div class="success-overlay" id="stream-success">
+  <div class="success-icon">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div class="success-name" id="st-success-name"></div>
+  <div class="success-label">Registered for stream</div>
+  <div class="zoom-card">
+    <div class="zoom-card-label">Zoom Link</div>
+    <div class="zoom-link-text">https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09</div>
+    <div class="zoom-actions">
+      <button class="zoom-btn" id="copy-zoom-btn" onclick="copyZoomLink()">Copy Link</button>
+      <button class="zoom-btn outline" onclick="shareZoomLink()">Share</button>
+    </div>
+  </div>
+  <button class="next-btn" onclick="resetStream()">Next Person</button>
 </div>
 
 <script>
+  // ── Constants ──
+  const STORAGE_KEY  = 'regalia_db_v2';
+  const ZOOM_LINK    = 'https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09';
+  const CHECKIN_URL  = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSd3-XY_WdvEApfMA7PeX9ctLMVj4ops3WFHqGA0RuPv-YE9ZQ/formResponse';
+  const STREAM_URL   = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLScS9fUwyo_43FQX_GKGlSvWOn_dnxzETY1YOZJVU2owS1TvRA/formResponse';
+  const CLASS_STYLES = { psephos: 'psephos' };
+
+  // ── State ──
   let database = [];
   let rawData = [];
   let columns = [];
   let currentFileName = '';
-  const STORAGE_KEY = 'tkn_lookup_db';
+  let checkinSelected = null;
+  let streamSelected  = null;
 
-  // --- Startup: check for saved DB ---
+  // ── Init ──
   window.addEventListener('DOMContentLoaded', () => {
-    checkSavedDatabase();
+    loadFromStorage();
+    updateHomeCards();
+    checkSavedBanner();
   });
 
-  function checkSavedDatabase() {
+  function loadFromStorage() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) return;
-      const parsed = JSON.parse(saved);
-      if (!parsed.database || !parsed.database.length) return;
-
-      const banner = document.getElementById('savedBanner');
-      document.getElementById('savedBannerTitle').textContent = parsed.fileName || 'Saved Database';
-      document.getElementById('savedBannerMeta').textContent =
-        `${parsed.database.length} records · Saved ${formatDate(parsed.savedAt)}`;
-      banner.classList.add('visible');
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (saved && saved.database && saved.database.length) {
+        database = saved.database;
+        currentFileName = saved.fileName || '';
+      }
     } catch(e) {}
   }
 
-  function loadSavedDatabase() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      database = saved.database;
-      currentFileName = saved.fileName || 'Saved Database';
-      showSearchUI(true);
-    } catch(e) {
-      alert('Could not load saved database.');
-    }
+  function updateHomeCards() {
+    const has = database.length > 0;
+    document.getElementById('card-checkin').classList.toggle('disabled', !has);
+    document.getElementById('card-stream').classList.toggle('disabled', !has);
+    document.getElementById('no-records-prompt').style.display = has ? 'none' : 'flex';
   }
 
-  function clearSavedDatabase() {
-    localStorage.removeItem(STORAGE_KEY);
-    document.getElementById('savedBanner').classList.remove('visible');
+  // ── Navigation ──
+  function goTo(screen) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + screen).classList.add('active');
+    window.scrollTo(0, 0);
   }
 
-  function saveDatabase() {
-    try {
-      const payload = {
-        database,
-        fileName: currentFileName,
-        savedAt: new Date().toISOString(),
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      // Update save bar UI
-      document.getElementById('saveBarTitle').textContent = currentFileName;
-      document.getElementById('saveBarSub').textContent = `Saved just now · ${database.length} records`;
-      document.getElementById('saveBtn').textContent = '✓ Saved';
-      document.getElementById('saveBtn').disabled = true;
-      setTimeout(() => {
-        document.getElementById('saveBtn').textContent = 'Update Save';
-        document.getElementById('saveBtn').disabled = false;
-      }, 2000);
-    } catch(e) {
-      alert('Could not save — storage may be full or unavailable.');
-    }
+  // ── File Loading ──
+  function handleHomeFileLoad(input) {
+    if (input.files[0]) processFile(input.files[0]);
   }
 
-  function formatDate(isoStr) {
-    if (!isoStr) return '';
-    const d = new Date(isoStr);
-    return d.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  function handleUpdateFile(input) {
+    if (input.files[0]) processFile(input.files[0]);
   }
-
-  // --- Upload ---
-  const fileInput = document.getElementById('fileInput');
-  const uploadZone = document.getElementById('uploadZone');
-
-  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
-  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-  uploadZone.addEventListener('drop', e => {
-    e.preventDefault();
-    uploadZone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) processFile(file);
-  });
-
-  fileInput.addEventListener('change', e => {
-    if (e.target.files[0]) processFile(e.target.files[0]);
-  });
 
   function processFile(file) {
     currentFileName = file.name;
     const reader = new FileReader();
     reader.onload = function(e) {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        rawData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        if (!rawData.length) { alert('No data found in file.'); return; }
+        columns = Object.keys(rawData[0]);
+
+        const nc = columns.find(c => /name/i.test(c)) || columns[0];
+        const cc = columns.find(c => /class|grade|group/i.test(c)) || columns[1] || columns[0];
+        const tc = columns.find(c => /tkn|id|token|number/i.test(c)) || columns[2] || columns[0];
+
+        database = rawData.map(r => ({
+          name:  String(r[nc] || '').trim(),
+          class: String(r[cc] || '').trim(),
+          tkn:   String(r[tc] || '').trim(),
+        })).filter(r => r.name);
+
+        saveToStorage();
+        updateHomeCards();
+        alert(`Loaded ${database.length} records from ${file.name}`);
+      } catch(err) { alert('Could not read file. Please check it is a valid spreadsheet.'); }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function saveToStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ database, fileName: currentFileName, savedAt: new Date().toISOString() }));
+    } catch(e) {}
+  }
+
+  // ── Class Badge ──
+  function getClassBadge(cls) {
+    if (!cls) return '';
+    const key = cls.toLowerCase().trim();
+    const s = CLASS_STYLES[key];
+    return `<span class="class-badge ${s ? 'class-badge-' + s : 'class-badge-default'}">${cls}</span>`;
+  }
+
+  // ── Pill Toggle ──
+  function setMode(screen, mode) {
+    const tog = document.getElementById(screen + '-toggle');
+    tog.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', i === (mode === 'member' ? 0 : 1)));
+    document.getElementById(screen + '-member').style.display = mode === 'member' ? 'flex' : 'none';
+    document.getElementById(screen + '-visitor').style.display = mode === 'visitor' ? 'flex' : 'none';
+  }
+
+  // ── Autocomplete ──
+  function showDropdown(screen, query) {
+    const dd = document.getElementById(screen + '-dropdown');
+    if (!query) { dd.classList.remove('visible'); return; }
+    const q = query.toLowerCase();
+    const hits = database.filter(r => r.name.toLowerCase().includes(q) || r.tkn.toLowerCase().includes(q)).slice(0, 8);
+    if (!hits.length) { dd.classList.remove('visible'); return; }
+
+    dd.innerHTML = hits.map(r =>
+      `<div class="autocomplete-item" onclick="selectMember('${screen}','${esc(r.name)}','${esc(r.tkn)}','${esc(r.class)}')">
+        <span class="autocomplete-name">${r.name}</span>
+        <span class="autocomplete-tkn">${r.tkn}</span>
+      </div>`
+    ).join('');
+    dd.classList.add('visible');
+  }
+
+  function selectMember(screen, name, tkn, cls) {
+    document.getElementById(screen + '-search').value = name;
+    const nd = document.getElementById(screen + '-name-display');
+    nd.textContent = name;
+    nd.classList.remove('autofill-placeholder');
+    document.getElementById(screen + '-badge').innerHTML = getClassBadge(cls);
+    document.getElementById(screen + '-tkn').value = tkn;
+    document.getElementById(screen + '-' + (screen === 'checkin' ? 'member-btn' : 'member-btn')).disabled = false;
+    document.getElementById(screen + '-dropdown').classList.remove('visible');
+    if (screen === 'checkin') checkinSelected = { name, tkn, cls };
+    if (screen === 'stream')  streamSelected  = { name, tkn, cls };
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.autocomplete-wrap'))
+      document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.classList.remove('visible'));
+  });
+
+  // ── Form POST ──
+  function buildBody(obj) {
+    return Object.entries(obj).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  }
+
+  async function postForm(url, body) {
+    try { await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body }); }
+    catch(e) {}
+  }
+
+  // ── Check-in Submit ──
+  async function submitCheckin(mode) {
+    let name, body;
+    if (mode === 'member') {
+      if (!checkinSelected) return;
+      name = checkinSelected.name;
+      body = buildBody({ 'entry.336694999':'Member', 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn });
+    } else {
+      name = document.getElementById('ci-v-name').value.trim();
+      if (!name) { alert('Please enter a name.'); return; }
+      body = buildBody({ 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() });
+    }
+    await postForm(CHECKIN_URL, body);
+    document.getElementById('ci-success-name').textContent = name;
+    document.getElementById('checkin-success').classList.add('visible');
+    setTimeout(() => { document.getElementById('checkin-success').classList.remove('visible'); resetCheckin(); }, 2500);
+  }
+
+  function resetCheckin() {
+    checkinSelected = null;
+    document.getElementById('checkin-search').value = '';
+    const nd = document.getElementById('checkin-name-display');
+    nd.textContent = 'Select from search above'; nd.classList.add('autofill-placeholder');
+    document.getElementById('checkin-badge').innerHTML = '';
+    document.getElementById('checkin-tkn').value = '';
+    document.getElementById('checkin-member-btn').disabled = true;
+    ['ci-v-name','ci-v-phone','ci-v-invited'].forEach(id => document.getElementById(id).value = '');
+  }
+
+  // ── Stream Submit ──
+  async function submitStream(mode) {
+    let name, body;
+    if (mode === 'member') {
+      if (!streamSelected) return;
+      name = streamSelected.name;
+      body = buildBody({ 'entry.336694999':'Member', 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn });
+    } else {
+      name = document.getElementById('st-v-name').value.trim();
+      if (!name) { alert('Please enter a name.'); return; }
+      body = buildBody({ 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() });
+    }
+    await postForm(STREAM_URL, body);
+    document.getElementById('st-success-name').textContent = name;
+    document.getElementById('stream-success').classList.add('visible');
+  }
+
+  function resetStream() {
+    document.getElementById('stream-success').classList.remove('visible');
+    streamSelected = null;
+    document.getElementById('stream-search').value = '';
+    const nd = document.getElementById('stream-name-display');
+    nd.textContent = 'Select from search above'; nd.classList.add('autofill-placeholder');
+    document.getElementById('stream-badge').innerHTML = '';
+    document.getElementById('stream-tkn').value = '';
+    document.getElementById('stream-member-btn').disabled = true;
+    ['st-v-name','st-v-phone','st-v-invited'].forEach(id => document.getElementById(id).value = '');
+  }
+
+  // ── Zoom ──
+  function copyZoomLink() {
+    navigator.clipboard.writeText(ZOOM_LINK).then(() => {
+      const btn = document.getElementById('copy-zoom-btn');
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = 'Copy Link', 2000);
+    });
+  }
+
+  function shareZoomLink() {
+    if (navigator.share) navigator.share({ title: 'Regalia Church Stream', url: ZOOM_LINK }).catch(() => copyZoomLink());
+    else copyZoomLink();
+  }
+
+  // ── Records Search ──
+  const fileInput = document.getElementById('fileInput');
+  const uploadZone = document.getElementById('uploadZone');
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) processFileForRecords(e.dataTransfer.files[0]); });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) processFileForRecords(e.target.files[0]); });
+
+  function processFileForRecords(file) {
+    currentFileName = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
       rawData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-      if (rawData.length === 0) { alert('No data found in spreadsheet.'); return; }
-
+      if (!rawData.length) { alert('No data found.'); return; }
       columns = Object.keys(rawData[0]);
       populateSelects();
       document.getElementById('mapper').classList.add('visible');
@@ -787,190 +1319,161 @@
   }
 
   function populateSelects() {
-    ['nameCol', 'classCol', 'tknCol'].forEach(id => {
-      const sel = document.getElementById(id);
-      sel.innerHTML = columns.map(c => `<option value="${c}">${c}</option>`).join('');
+    ['nameCol','classCol','tknCol'].forEach(id => {
+      document.getElementById(id).innerHTML = columns.map(c => `<option value="${c}">${c}</option>`).join('');
     });
-
-    const nameGuess = columns.find(c => /name/i.test(c));
-    const classGuess = columns.find(c => /class|grade|group/i.test(c));
-    const tknGuess = columns.find(c => /tkn|id|token|number/i.test(c));
-
-    if (nameGuess) document.getElementById('nameCol').value = nameGuess;
-    if (classGuess) document.getElementById('classCol').value = classGuess;
-    if (tknGuess) document.getElementById('tknCol').value = tknGuess;
+    const ng = columns.find(c => /name/i.test(c));
+    const cg = columns.find(c => /class|grade|group/i.test(c));
+    const tg = columns.find(c => /tkn|id|token|number/i.test(c));
+    if (ng) document.getElementById('nameCol').value = ng;
+    if (cg) document.getElementById('classCol').value = cg;
+    if (tg) document.getElementById('tknCol').value = tg;
   }
 
   function loadDatabase() {
-    const nameCol = document.getElementById('nameCol').value;
-    const classCol = document.getElementById('classCol').value;
-    const tknCol = document.getElementById('tknCol').value;
-
-    database = rawData.map(row => ({
-      name: String(row[nameCol] || '').trim(),
-      class: String(row[classCol] || '').trim(),
-      tkn: String(row[tknCol] || '').trim(),
+    const nc = document.getElementById('nameCol').value;
+    const cc = document.getElementById('classCol').value;
+    const tc = document.getElementById('tknCol').value;
+    database = rawData.map(r => ({
+      name: String(r[nc]||'').trim(), class: String(r[cc]||'').trim(), tkn: String(r[tc]||'').trim()
     })).filter(r => r.name);
-
     document.getElementById('mapper').classList.remove('visible');
-    showSearchUI(false);
+    showRecordsUI(false);
+    updateHomeCards();
   }
 
-  function showSearchUI(fromSave) {
-    // Populate class filter
+  function showRecordsUI(fromSave) {
     const classes = [...new Set(database.map(r => r.class))].filter(Boolean).sort();
-    const classFilter = document.getElementById('classFilter');
-    classFilter.innerHTML = '<option value="">All Classes</option>' +
-      classes.map(c => `<option value="${c}">${c}</option>`).join('');
-
+    document.getElementById('classFilter').innerHTML = '<option value="">All Classes</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
     document.getElementById('dbStats').innerHTML = `<span>${database.length}</span> records loaded`;
     document.getElementById('uploadZone').style.display = 'none';
     document.getElementById('savedBanner').classList.remove('visible');
-    document.getElementById('searchSection').classList.add('visible');
-
-    // Save bar state
+    const ss = document.getElementById('searchSection');
+    ss.style.display = 'flex';
+    ss.style.flexDirection = 'column';
     if (fromSave) {
-      // Loaded from saved — show "update" option
       document.getElementById('saveBarTitle').textContent = currentFileName || 'Saved Database';
-      document.getElementById('saveBarSub').textContent = 'This database is saved locally. Load a new file to replace it.';
-      document.getElementById('saveBtn').textContent = 'Update Save';
+      document.getElementById('saveBarSub').textContent = 'Database is saved locally.';
+      document.getElementById('saveBtn').textContent = 'Update';
     } else {
       document.getElementById('saveBarTitle').textContent = currentFileName;
-      document.getElementById('saveBarSub').textContent = `Save ${database.length} records locally so they reload automatically next visit.`;
-      document.getElementById('saveBtn').textContent = 'Save Database';
+      document.getElementById('saveBarSub').textContent = `${database.length} records — save locally for next visit.`;
+      document.getElementById('saveBtn').textContent = 'Save';
       document.getElementById('saveBtn').disabled = false;
     }
-
     document.getElementById('searchInput').focus();
-    search();
+    doRecordsSearch();
   }
 
-  // --- Search ---
-  function search() {
-    const query = document.getElementById('searchInput').value.toLowerCase().trim();
-    const classFilter = document.getElementById('classFilter').value;
-
-    let results = database;
-    if (classFilter) results = results.filter(r => r.class === classFilter);
-    if (query) results = results.filter(r => r.name.toLowerCase().includes(query));
-
-    const count = document.getElementById('resultCount');
-    count.textContent = query || classFilter ? `${results.length} result${results.length !== 1 ? 's' : ''}` : '';
-
-    const container = document.getElementById('results');
-
-    if (results.length === 0) {
-      container.innerHTML = '<div class="no-results">No records found</div>';
-      return;
-    }
-
-    const display = results.slice(0, 50);
-    container.innerHTML = display.map((r) => `
+  function doRecordsSearch() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const cf = document.getElementById('classFilter').value;
+    let res = database;
+    if (cf) res = res.filter(r => r.class === cf);
+    if (q) res = res.filter(r => r.name.toLowerCase().includes(q));
+    document.getElementById('resultCount').textContent = (q || cf) ? `${res.length} result${res.length !== 1 ? 's' : ''}` : '';
+    const cont = document.getElementById('results');
+    if (!res.length) { cont.innerHTML = '<div class="no-results">No records found</div>'; return; }
+    cont.innerHTML = res.slice(0,50).map(r => `
       <div class="result-card">
         <div class="result-info">
-          <div class="result-name">${highlight(r.name, query)}</div>
+          <div class="result-name">${hilite(r.name, q)}</div>
           ${r.class ? getClassBadge(r.class) : ''}
         </div>
         <div class="result-tkn">
           <div class="tkn-value">${r.tkn || '—'}</div>
-          <button class="copy-btn" onclick="copyTKN(this, '${escapeTkn(r.tkn)}')" title="Copy TKN">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
+          <button class="copy-btn" onclick="copyTKN(this,'${esc(r.tkn)}')" title="Copy TKN">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
         </div>
-      </div>
-    `).join('');
-
-    if (results.length > 50) {
-      container.innerHTML += `<div class="no-results" style="padding:16px">Showing 50 of ${results.length} — refine your search</div>`;
-    }
+      </div>`).join('');
+    if (res.length > 50) cont.innerHTML += `<div class="no-results" style="padding:14px">Showing 50 of ${res.length} — refine your search</div>`;
   }
 
-  // ── Class badge mapper ──────────────────────────
-  const CLASS_STYLES = {
-    'psephos': 'psephos',
-    // Add more classes here as needed, e.g.:
-    // 'alpha': 'alpha',
-  };
-
-  function getClassBadge(className) {
-    if (!className) return '';
-    const key = className.toLowerCase().trim();
-    const style = CLASS_STYLES[key];
-    const cls = style ? `class-badge-${style}` : 'class-badge-default';
-    return `<span class="class-badge ${cls}">${className}</span>`;
-  }
-  // ────────────────────────────────────────────────
-
-  function highlight(text, query) {
-    if (!query) return text;
-    const idx = text.toLowerCase().indexOf(query);
-    if (idx === -1) return text;
-    return text.slice(0, idx) +
-      `<mark style="background:var(--accent-dim);color:var(--accent);border-radius:2px;">${text.slice(idx, idx + query.length)}</mark>` +
-      text.slice(idx + query.length);
+  function hilite(text, q) {
+    if (!q) return text;
+    const i = text.toLowerCase().indexOf(q);
+    if (i === -1) return text;
+    return text.slice(0,i) + `<mark style="background:var(--accent-dim);color:var(--accent);border-radius:2px;">${text.slice(i,i+q.length)}</mark>` + text.slice(i+q.length);
   }
 
-  function escapeTkn(tkn) {
-    return tkn.replace(/'/g, "\\'");
+  function checkSavedBanner() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!saved || !saved.database || !saved.database.length) return;
+      document.getElementById('savedBannerTitle').textContent = saved.fileName || 'Saved Database';
+      document.getElementById('savedBannerMeta').textContent = `${saved.database.length} records · Saved ${fmtDate(saved.savedAt)}`;
+      document.getElementById('savedBanner').classList.add('visible');
+    } catch(e) {}
   }
+
+  function loadSavedDatabase() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      database = saved.database;
+      currentFileName = saved.fileName || 'Saved Database';
+      showRecordsUI(true);
+    } catch(e) { alert('Could not load saved database.'); }
+  }
+
+  function clearSavedDatabase() {
+    localStorage.removeItem(STORAGE_KEY);
+    database = [];
+    document.getElementById('savedBanner').classList.remove('visible');
+    updateHomeCards();
+  }
+
+  function saveDatabase() {
+    saveToStorage();
+    document.getElementById('saveBarTitle').textContent = currentFileName;
+    document.getElementById('saveBarSub').textContent = `Saved just now · ${database.length} records`;
+    document.getElementById('saveBtn').textContent = '✓ Saved';
+    document.getElementById('saveBtn').disabled = true;
+    setTimeout(() => { document.getElementById('saveBtn').textContent = 'Update'; document.getElementById('saveBtn').disabled = false; }, 2000);
+  }
+
+  function resetRecordsSearch() {
+    database = []; rawData = []; columns = []; currentFileName = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('searchSection').style.display = 'none';
+    document.getElementById('mapper').classList.remove('visible');
+    document.getElementById('uploadZone').style.display = '';
+    document.getElementById('fileInput').value = '';
+    checkSavedBanner();
+    updateHomeCards();
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  function esc(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
   function copyTKN(btn, tkn) {
     navigator.clipboard.writeText(tkn).then(() => {
       btn.classList.add('copied');
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
       setTimeout(() => {
         btn.classList.remove('copied');
-        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
       }, 1800);
     });
   }
 
-  function resetApp() {
-    database = [];
-    rawData = [];
-    columns = [];
-    currentFileName = '';
-    document.getElementById('searchInput').value = '';
-    document.getElementById('results').innerHTML = '';
-    document.getElementById('searchSection').classList.remove('visible');
-    document.getElementById('mapper').classList.remove('visible');
-    document.getElementById('uploadZone').style.display = '';
-    document.getElementById('fileInput').value = '';
-    checkSavedDatabase();
-  }
-
-  // ── Splash Screen ──────────────────────────────
+  // ── Splash ──
   const splash = document.getElementById('splash');
   const splashVideo = document.getElementById('splashVideo');
-
-  function dismissSplash() {
-    splash.classList.add('fade-out');
-    document.body.classList.remove('splash-active');
-    setTimeout(() => splash.remove(), 700);
-  }
-
-  // Dismiss when video ends
+  function dismissSplash() { splash.classList.add('fade-out'); document.body.classList.remove('splash-active'); setTimeout(() => splash.remove(), 700); }
   splashVideo.addEventListener('ended', dismissSplash);
-
-  // Show video only once it's ready to play
-  splashVideo.addEventListener('canplay', () => {
-    splashVideo.style.opacity = '1';
-  });
-
-  // Fallback: dismiss after 6s in case video stalls
+  splashVideo.addEventListener('canplay', () => { splashVideo.style.opacity = '1'; });
+  splashVideo.addEventListener('error', () => setTimeout(dismissSplash, 300));
   setTimeout(dismissSplash, 6000);
 
-  // If video fails to load at all, dismiss quickly
-  splashVideo.addEventListener('error', () => setTimeout(dismissSplash, 300));
-  // ───────────────────────────────────────────────
-
-  // ── Register Service Worker ──
+  // ── Service Worker ──
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
   }
 </script>
 </body>
