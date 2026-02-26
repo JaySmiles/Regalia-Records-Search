@@ -1059,12 +1059,10 @@
   <div class="success-name" id="st-success-name"></div>
   <div class="success-label">Registered for stream</div>
   <div class="zoom-card">
-    <div class="zoom-card-label">Zoom Link</div>
-    <div class="zoom-link-text">https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09</div>
-    <div class="zoom-actions">
-      <button class="zoom-btn" id="copy-zoom-btn" onclick="copyZoomLink()">Copy Link</button>
-      <button class="zoom-btn outline" onclick="shareZoomLink()">Share</button>
-    </div>
+    <div class="zoom-card-label">Zoom Link — tap to open</div>
+    <a href="https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09" target="_blank" style="color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:0.74px;word-break:break-all;line-height:1.5;text-decoration:underline;font-size:0.78rem;">
+      https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09
+    </a>
   </div>
   <button class="next-btn" onclick="resetStream()">Next Person</button>
 </div>
@@ -1109,12 +1107,26 @@
     document.getElementById('no-records-prompt').style.display = has ? 'none' : 'flex';
   }
 
-  // ── Navigation ──
+
+  // ── Android Back Button ──
+  let currentScreen = 'home';
+
   function goTo(screen) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + screen).classList.add('active');
     window.scrollTo(0, 0);
+    if (screen !== 'home') {
+      history.pushState({ screen }, '', '');
+    }
+    currentScreen = screen;
   }
+
+  window.addEventListener('popstate', function(e) {
+    if (currentScreen !== 'home') {
+      goTo('home');
+    }
+  });
+
 
   // ── File Loading ──
   function handleHomeFileLoad(input) {
@@ -1212,13 +1224,12 @@
   });
 
   // ── Form POST ──
-  function buildBody(obj) {
-    return Object.entries(obj).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
-  }
-
-  async function postForm(url, body) {
-    try { await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body }); }
-    catch(e) {}
+  async function postForm(url, obj) {
+    try {
+      const fd = new FormData();
+      Object.entries(obj).forEach(([k, v]) => fd.append(k, v));
+      await fetch(url, { method: 'POST', mode: 'no-cors', body: fd });
+    } catch(e) {}
   }
 
   // ── Check-in Submit ──
@@ -1227,11 +1238,11 @@
     if (mode === 'member') {
       if (!checkinSelected) return;
       name = checkinSelected.name;
-      body = buildBody({ 'entry.336694999':'Member', 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn });
+      body = { 'entry.336694999':'Member', 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn };
     } else {
       name = document.getElementById('ci-v-name').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      body = buildBody({ 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() });
+      body = { 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() };
     }
     await postForm(CHECKIN_URL, body);
     document.getElementById('ci-success-name').textContent = name;
@@ -1256,11 +1267,11 @@
     if (mode === 'member') {
       if (!streamSelected) return;
       name = streamSelected.name;
-      body = buildBody({ 'entry.336694999':'Member', 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn });
+      body = { 'entry.336694999':'Member', 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn };
     } else {
       name = document.getElementById('st-v-name').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      body = buildBody({ 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() });
+      body = { 'entry.336694999':'Visitor', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() };
     }
     await postForm(STREAM_URL, body);
     document.getElementById('st-success-name').textContent = name;
