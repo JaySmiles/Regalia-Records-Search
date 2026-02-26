@@ -1553,25 +1553,62 @@
     `).join('');
   }
 
-  // ── Form submission via GET with query params ──
-  // Google Forms reliably accepts GET requests with entry fields as query params.
-  // POST with no-cors strips headers making body encoding unpredictable.
-  // GET avoids the content-type issue entirely and works consistently.
-  async function attemptPost(url, obj) {
-    const params = new URLSearchParams(obj).toString();
-    const fullUrl = url + '?' + params;
+  // ── Form submission via hidden iframe ──
+  // fetch() with no-cors mangles the request regardless of encoding method.
+  // A real HTML form POST via a hidden iframe bypasses all of that —
+  // the browser constructs and sends the request natively, exactly as
+  // Google Forms expects. The iframe swallows the CORS response silently.
+  function submitViaIframe(url, obj) {
+    return new Promise((resolve) => {
+      // Remove any previous submission iframe
+      const old = document.getElementById('_gf_iframe');
+      if (old) old.remove();
+      const oldForm = document.getElementById('_gf_form');
+      if (oldForm) oldForm.remove();
 
+      const iframe = document.createElement('iframe');
+      iframe.id = '_gf_iframe';
+      iframe.name = '_gf_iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      const form = document.createElement('form');
+      form.id = '_gf_form';
+      form.method = 'POST';
+      form.action = url;
+      form.target = '_gf_iframe';
+      form.style.display = 'none';
+
+      Object.entries(obj).forEach(([k, v]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = k;
+        input.value = v;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+
+      // Resolve after a short delay — iframe load fires even on CORS error,
+      // and Google Forms processes the submission before redirecting.
+      iframe.onload = () => { setTimeout(() => resolve(true), 300); };
+      iframe.onerror = () => resolve(false);
+
+      form.submit();
+
+      // Safety timeout — resolve after 10s regardless
+      setTimeout(() => resolve(true), 10000);
+    });
+  }
+
+  async function attemptPost(url, obj) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 8000);
-        await fetch(fullUrl, {
-          method: 'GET',
-          mode: 'no-cors',
-          signal: controller.signal
-        });
-        clearTimeout(timer);
-        return true;
+        const ok = await Promise.race([
+          submitViaIframe(url, obj),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000))
+        ]);
+        if (ok) return true;
       } catch(e) {
         if (attempt === 2) return false;
         await new Promise(r => setTimeout(r, 1000));
@@ -1580,8 +1617,20 @@
     return false;
   }
 
+  // Lightweight connectivity probe — tries to fetch a tiny known-good resource
+  async function isConnected() {
+    if (!navigator.onLine) return false;
+    try {
+      await fetch('https://www.google.com/favicon.ico', {
+        method: 'HEAD', mode: 'no-cors', cache: 'no-store',
+        signal: AbortSignal.timeout(4000)
+      });
+      return true;
+    } catch(e) { return false; }
+  }
+
   async function flushQueue() {
-    if (!navigator.onLine) return;
+    if (!await isConnected()) return;
     const q = getQueue();
     if (!q.length) return;
     const urlMap = { checkin: CHECKIN_URL, stream: STREAM_URL };
@@ -1622,7 +1671,7 @@
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
     resetCheckin();
 
-    if (!navigator.onLine) {
+    if (!await isConnected()) {
       addToQueue({ id, form:'checkin', mode, name, fields, timestamp });
       document.getElementById('ci-warning-name').textContent = name;
       document.getElementById('ci-warning-meta').textContent = metaText;
@@ -1674,7 +1723,7 @@
 
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
 
-    if (!navigator.onLine) {
+    if (!await isConnected()) {
       addToQueue({ id, form:'stream', mode, name, fields, timestamp });
       document.getElementById('st-warning-name').textContent = name;
       document.getElementById('st-warning-meta').textContent = metaText;
