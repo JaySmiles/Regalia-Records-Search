@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Regalia Records Search</title>
+<title>Light for Light</title>
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -1144,11 +1144,15 @@
 
   <div id="no-records-prompt" class="no-records-prompt">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-    <p><strong>No records loaded</strong>Load a file to unlock In Person and Stream.</p>
+    <p><strong>No records loaded</strong>Load a file to unlock In Person.</p>
     <label class="load-records-btn">
       Load File
       <input type="file" accept=".xlsx,.xls,.csv" onchange="handleHomeFileLoad(this)">
     </label>
+  </div>
+
+  <div style="text-align:center;padding:0 20px 8px;width:100%;max-width:480px;">
+    <h1 style="font-size:1.35rem;font-weight:700;color:var(--gold);letter-spacing:0.03em;line-height:1.3;">House of Prayer All Night</h1>
   </div>
 
   <div class="home-cards">
@@ -1164,17 +1168,6 @@
       <svg class="home-card-arrow" style="margin-left:4px;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
     </div>
 
-    <div class="home-card disabled" id="card-stream" onclick="goTo('stream')">
-      <div class="home-card-icon">📡</div>
-      <div class="home-card-text">
-        <h2>Stream</h2>
-        <p>Register online attendance</p>
-      </div>
-      <div style="position:relative;margin-left:auto;flex-shrink:0;">
-        <span class="queue-badge" id="stream-queue-badge" style="display:none"></span>
-      </div>
-      <svg class="home-card-arrow" style="margin-left:4px;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-    </div>
 
     <div class="home-card" onclick="goTo('records')">
       <div class="home-card-icon">🔍</div>
@@ -1261,75 +1254,6 @@
         <input class="form-field" type="text" id="ci-v-invited" placeholder="Enter name">
       </div>
       <button class="submit-btn" onclick="submitCheckin('visitor')">Submit</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════ -->
-<!-- STREAM                                -->
-<!-- ══════════════════════════════════════ -->
-<div class="screen" id="screen-stream">
-  <div class="app-header">
-    <button class="back-btn" onclick="goTo('home')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
-    </button>
-    <img class="logo" src="logo.png" alt="Regalia Records">
-  </div>
-
-  <div class="container">
-    <div class="pill-toggle" id="stream-toggle">
-      <button class="active" onclick="setMode('stream','member')">Member</button>
-      <button onclick="setMode('stream','visitor')">Visitor</button>
-    </div>
-
-    <!-- Member -->
-    <div id="stream-member" style="display:flex;flex-direction:column;gap:16px;">
-      <div class="search-row">
-        <div class="autocomplete-wrap">
-          <div class="search-box">
-            <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="stream-search" placeholder="Search by name or TKN..." autocomplete="off" oninput="showDropdown('stream', this.value)">
-          </div>
-          <div class="autocomplete-dropdown" id="stream-dropdown"></div>
-        </div>
-        <label class="update-records-btn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Update
-          <input type="file" accept=".xlsx,.xls,.csv" onchange="handleUpdateFile(this)">
-        </label>
-      </div>
-
-      <div class="form-group">
-        <label>Name</label>
-        <div class="autofill-row">
-          <span class="autofill-name autofill-placeholder" id="stream-name-display">Select from search above</span>
-          <span id="stream-badge"></span>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>TKN</label>
-        <input class="form-field" type="text" id="stream-tkn" readonly placeholder="Auto-filled">
-      </div>
-
-      <button class="submit-btn" id="stream-member-btn" onclick="submitStream('member')" disabled>Submit & Get Link</button>
-    </div>
-
-    <!-- Visitor -->
-    <div id="stream-visitor" style="display:none;flex-direction:column;gap:16px;">
-      <div class="form-group">
-        <label>Full Name</label>
-        <input class="form-field" type="text" id="st-v-name" placeholder="Enter full name">
-      </div>
-      <div class="form-group">
-        <label>Phone Number</label>
-        <input class="form-field" type="tel" id="st-v-phone" placeholder="Enter phone number">
-      </div>
-      <div class="form-group">
-        <label>Who Invited You?</label>
-        <input class="form-field" type="text" id="st-v-invited" placeholder="Enter name">
-      </div>
-      <button class="submit-btn" onclick="submitStream('visitor')">Submit & Get Link</button>
     </div>
   </div>
 </div>
@@ -1424,21 +1348,6 @@
   <div class="success-meta" id="ci-success-meta"></div>
 </div>
 
-<div class="success-overlay" id="stream-success">
-  <div class="success-icon">
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-  </div>
-  <div class="success-name" id="st-success-name"></div>
-  <div class="success-label">Registered for stream</div>
-  <div class="success-meta" id="st-success-meta"></div>
-  <div class="zoom-card">
-    <div class="zoom-card-label">Zoom Link — tap to open</div>
-    <a href="https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09" target="_blank" style="color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:0.74px;word-break:break-all;line-height:1.5;text-decoration:underline;font-size:0.78rem;">
-      https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09
-    </a>
-  </div>
-  <button class="next-btn" onclick="resetStream()">Next Person</button>
-</div>
 
 
 <!-- ══════════════════════════════════════ -->
@@ -1541,21 +1450,6 @@
   <button class="next-btn" onclick="document.getElementById('checkin-warning').classList.remove('visible')">OK</button>
 </div>
 
-<div class="warning-overlay" id="stream-warning">
-  <div class="warning-icon">
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-  </div>
-  <div class="warning-name" id="st-warning-name"></div>
-  <div class="warning-label">No connection — saved to queue and will be sent when you're back online</div>
-  <div class="success-meta" id="st-warning-meta"></div>
-  <div class="zoom-card" style="margin-top:4px;">
-    <div class="zoom-card-label">Zoom Link — tap to open</div>
-    <a href="https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09" target="_blank" style="color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;word-break:break-all;line-height:1.5;text-decoration:underline;">
-      https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09
-    </a>
-  </div>
-  <button class="next-btn" onclick="document.getElementById('stream-warning').classList.remove('visible');resetStream()">Next Person</button>
-</div>
 
 <!-- Queue FAB -->
 <button class="queue-screen-btn" id="queue-fab" onclick="goTo('queue')">
@@ -1568,8 +1462,7 @@
   // ── Constants ──
   const STORAGE_KEY  = 'regalia_db_v2';
   const ZOOM_LINK    = 'https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09';
-  const CHECKIN_URL  = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSd3-XY_WdvEApfMA7PeX9ctLMVj4ops3WFHqGA0RuPv-YE9ZQ/formResponse';
-  const STREAM_URL   = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLScS9fUwyo_43FQX_GKGlSvWOn_dnxzETY1YOZJVU2owS1TvRA/formResponse';
+  const CHECKIN_URL  = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSdgYwiyxESYtghUQBJ5MD3Yl_yhDi9YMJGzOf4S_nGQvKAjsQ/formResponse';
   const CLASS_STYLES = { psephos: 'psephos', tamite: 'tamite', lithos: 'lithos', solitaire: 'solitaire', petros: 'petros', archpetros: 'archpetros' };
 
   // ── State ──
@@ -1578,7 +1471,6 @@
   let columns = [];
   let currentFileName = '';
   let checkinSelected = null;
-  let streamSelected  = null;
 
   // ── Init ──
   window.addEventListener('DOMContentLoaded', () => {
@@ -1604,7 +1496,6 @@
   function updateHomeCards() {
     const has = database.length > 0;
     document.getElementById('card-checkin').classList.toggle('disabled', !has);
-    document.getElementById('card-stream').classList.toggle('disabled', !has);
     document.getElementById('no-records-prompt').style.display = has ? 'none' : 'flex';
   }
 
@@ -1620,7 +1511,7 @@
       releaseWakeLock();
     }
     currentScreen = screen;
-    if (screen === 'checkin' || screen === 'stream') requestWakeLock();
+    if (screen === 'checkin') requestWakeLock();
     if (screen === 'queue') renderQueueScreen();
     if (screen === 'log')   renderLog();
     updateQueueUI();
@@ -1738,7 +1629,6 @@
     document.getElementById(screen + '-' + (screen === 'checkin' ? 'member-btn' : 'member-btn')).disabled = false;
     document.getElementById(screen + '-dropdown').classList.remove('visible');
     if (screen === 'checkin') checkinSelected = { name, tkn, cls };
-    if (screen === 'stream')  streamSelected  = { name, tkn, cls };
   }
 
   document.addEventListener('click', e => {
@@ -1793,9 +1683,6 @@
     if (fab) { fab.classList.toggle('visible', total > 0); if (fabCount) fabCount.textContent = total; }
 
     const ciBadge = document.getElementById('checkin-queue-badge');
-    const stBadge = document.getElementById('stream-queue-badge');
-    if (ciBadge) { ciBadge.style.display = ci > 0 ? 'flex' : 'none'; ciBadge.textContent = ci; }
-    if (stBadge) { stBadge.style.display = st > 0 ? 'flex' : 'none'; stBadge.textContent = st; }
   }
 
   function renderQueueScreen() {
@@ -1936,7 +1823,7 @@
     if (!await isConnected()) return;
     const q = getQueue();
     if (!q.length) return;
-    const urlMap = { checkin: CHECKIN_URL, stream: STREAM_URL };
+    const urlMap = { checkin: CHECKIN_URL };
     for (const item of q) {
       const ok = await attemptPost(urlMap[item.form], item.fields);
       if (ok) removeFromQueue(item.id);
@@ -2215,92 +2102,7 @@
     ['ci-v-name','ci-v-phone','ci-v-invited'].forEach(id => document.getElementById(id).value = '');
   }
 
-  // ── Stream Submit ──
-  async function submitStream(mode) {
-    let name, tkn = '', phone = '', invitedBy = '', fields;
-    const timestamp = new Date().toISOString();
-    const id = genUUID();
 
-    if (mode === 'member') {
-      if (!streamSelected) return;
-      name = streamSelected.name;
-      tkn  = streamSelected.tkn;
-      fields = { mode:'member', page1Value:'Member', page2Fields: { 'entry.481330014':name, 'entry.561268821':tkn } };
-    } else {
-      name       = document.getElementById('st-v-name').value.trim();
-      phone      = document.getElementById('st-v-phone').value.trim();
-      invitedBy  = document.getElementById('st-v-invited').value.trim();
-      if (!name) { alert('Please enter a name.'); return; }
-      fields = { mode:'visitor', page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':phone, 'entry.1351021626':invitedBy } };
-    }
-
-    // Duplicate check
-    const dupeKey = mode === 'member' ? tkn : name;
-    const existing = findDuplicate('stream', mode, dupeKey);
-    if (existing) {
-      showDupeOverlay(name, existing, () => doStreamSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id));
-      return;
-    }
-    doStreamSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id);
-  }
-
-  async function doStreamSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id) {
-    const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
-
-    const logEntry = { id, form:'stream', mode, name, tkn, phone, invitedBy, timestamp, visitorName: mode === 'visitor' ? name : undefined };
-
-    if (!await isConnected()) {
-      addToQueue({ id, form:'stream', mode, name, fields, timestamp });
-      addToLog(logEntry);
-      document.getElementById('st-warning-name').textContent = name;
-      document.getElementById('st-warning-meta').textContent = metaText;
-      document.getElementById('stream-warning').classList.add('visible');
-      resetStream();
-      return;
-    }
-
-    const ok = await attemptPost(STREAM_URL, fields);
-    if (!ok) {
-      addToQueue({ id, form:'stream', mode, name, fields, timestamp });
-      addToLog(logEntry);
-      document.getElementById('st-warning-name').textContent = name;
-      document.getElementById('st-warning-meta').textContent = metaText;
-      document.getElementById('stream-warning').classList.add('visible');
-      resetStream();
-      return;
-    }
-
-    addToLog(logEntry);
-    document.getElementById('st-success-name').textContent = name;
-    document.getElementById('st-success-meta').textContent = metaText;
-    document.getElementById('stream-success').classList.add('visible');
-  }
-
-  function resetStream() {
-    document.getElementById('stream-success').classList.remove('visible');
-    streamSelected = null;
-    document.getElementById('stream-search').value = '';
-    const nd = document.getElementById('stream-name-display');
-    nd.textContent = 'Select from search above'; nd.classList.add('autofill-placeholder');
-    document.getElementById('stream-badge').innerHTML = '';
-    document.getElementById('stream-tkn').value = '';
-    document.getElementById('stream-member-btn').disabled = true;
-    ['st-v-name','st-v-phone','st-v-invited'].forEach(id => document.getElementById(id).value = '');
-  }
-
-  // ── Zoom ──
-  function copyZoomLink() {
-    navigator.clipboard.writeText(ZOOM_LINK).then(() => {
-      const btn = document.getElementById('copy-zoom-btn');
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => btn.textContent = 'Copy Link', 2000);
-    });
-  }
-
-  function shareZoomLink() {
-    if (navigator.share) navigator.share({ title: 'Regalia Church Stream', url: ZOOM_LINK }).catch(() => copyZoomLink());
-    else copyZoomLink();
-  }
 
   // ── Records Search ──
   const fileInput = document.getElementById('fileInput');
@@ -2489,7 +2291,7 @@
 
   // Re-acquire wake lock if screen was hidden and we're back on checkin/stream
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && (currentScreen === 'checkin' || currentScreen === 'stream')) {
+    if (document.visibilityState === 'visible' && currentScreen === 'checkin') {
       requestWakeLock();
     }
   });
