@@ -1292,12 +1292,6 @@
 
 
 <script>
-  // ── Global error catcher ──
-  window.onerror = function(msg, src, line, col, err) {
-    document.body.style.cssText = 'background:#1e2028;color:#ff4d6d;font-family:monospace;padding:20px;font-size:14px;';
-    document.body.innerHTML = '<h2>JS ERROR</h2><p>' + msg + '</p><p>Line ' + line + ':' + col + '</p><pre>' + (err && err.stack ? err.stack : '') + '</pre>';
-    return true;
-  };
   // ── Constants ──
   const STORAGE_KEY  = 'regalia_db_v2';
   const ZOOM_LINK    = 'https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09';
@@ -1575,29 +1569,17 @@
       .join('&');
   }
 
-  // ── Debug toast (remove after confirming submissions work) ──
-  function dbg(msg, color) {
-    color = color || '#d4af37';
-    const t = document.createElement('div');
-    t.style.cssText = `position:fixed;bottom:${80 + document.querySelectorAll('.dbg-toast').length * 52}px;left:50%;transform:translateX(-50%);background:#1e2028;border:1px solid ${color};color:${color};font-family:monospace;font-size:0.7rem;padding:8px 14px;border-radius:8px;z-index:9000;max-width:90vw;word-break:break-all;`;
-    t.className = 'dbg-toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 8000);
-  }
 
   async function nativePost(url, fields) {
     const Http = window.Capacitor?.Plugins?.CapacitorHttp;
     if (!Http) return null;
     const data = encodeFields(fields);
-    dbg('POST: ' + data.slice(0, 100), '#d4af37');
     const res = await Http.request({
       method: 'POST',
       url,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       data,
     });
-    dbg('status=' + res.status, '#22c55e');
     return res.status;
   }
 
@@ -1614,7 +1596,6 @@
       const i = document.createElement('input'); i.type='hidden'; i.name=k; i.value=v; form.appendChild(i);
     });
     document.body.appendChild(form);
-    dbg('IFRAME: ' + Object.keys(fields).join(', '), '#00e5c0');
     form.submit();
     setTimeout(() => form.remove(), 500);
     return new Promise(r => setTimeout(() => r(200), 3000));
@@ -1624,7 +1605,7 @@
     try {
       const status = await nativePost(url, fields);
       if (status !== null) return status;
-    } catch(e) { dbg('nativePost err: ' + e.message, '#ff4d6d'); }
+    } catch(e) { console.warn('nativePost err:', e.message); }
     return await iframePost(url, fields);
   }
 
@@ -1633,7 +1614,6 @@
     const tokens = { fvv: '1', fbzx };
 
     // Step 1 — page 0: submit Member/Visitor selection
-    dbg('Step 1: ' + submissionData.page1Value, '#d4af37');
     await postPage(baseUrl, {
       'entry.336694999': submissionData.page1Value,
       ...tokens,
@@ -1644,15 +1624,15 @@
     await new Promise(r => setTimeout(r, 1000));
 
     // Step 2 — page 1 (member) or page 2 (visitor): submit actual data
+    // entry.336694999 must be repeated here so it records in the sheet
     const pageIndex = submissionData.mode === 'member' ? '1' : '2';
-    dbg('Step 2: page ' + pageIndex, '#d4af37');
     const s2 = await postPage(baseUrl, {
+      'entry.336694999': submissionData.page1Value,
       ...submissionData.page2Fields,
       ...tokens,
       pageHistory: '0,' + pageIndex,
     });
 
-    dbg('Done, status=' + s2, s2 === 200 ? '#22c55e' : '#ff4d6d');
     return s2 === 200;
   }
 
@@ -1664,7 +1644,7 @@
         if (attempt === 2) return false;
         await new Promise(r => setTimeout(r, 1500));
       } catch(e) {
-        dbg('attemptPost err: ' + e.message, '#ff4d6d');
+        console.warn('attemptPost err:', e.message);
         if (attempt === 2) return false;
         await new Promise(r => setTimeout(r, 1500));
       }
