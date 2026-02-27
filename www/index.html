@@ -1613,27 +1613,19 @@
     const fbzx = genFbzx();
     const tokens = { fvv: '1', fbzx };
 
-    // Step 1 — page 0: submit Member/Visitor selection
-    await postPage(baseUrl, {
-      'entry.336694999': submissionData.page1Value,
-      ...tokens,
-      pageHistory: '0',
-      navigate: '1',
-    });
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    // Step 2 — page 1 (member) or page 2 (visitor): submit actual data
-    // entry.336694999 must be repeated here so it records in the sheet
+    // Send only the final page POST with full pageHistory.
+    // Sending Step 1 (navigate=1) caused Google to record a duplicate partial row.
+    // Sending pageHistory=0,1 (or 0,2) directly tells Google all pages were seen
+    // without triggering a separate recorded submission.
     const pageIndex = submissionData.mode === 'member' ? '1' : '2';
-    const s2 = await postPage(baseUrl, {
+    const s = await postPage(baseUrl, {
       'entry.336694999': submissionData.page1Value,
       ...submissionData.page2Fields,
       ...tokens,
       pageHistory: '0,' + pageIndex,
     });
 
-    return s2 === 200;
+    return s === 200;
   }
 
   async function attemptPost(url, submissionData) {
