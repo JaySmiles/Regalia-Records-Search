@@ -389,6 +389,36 @@
     animation: psephos-shimmer 3s ease infinite, psephos-glow 2.4s ease-in-out infinite;
   }
 
+  .class-badge-tamite {
+    color: #ff4d6d;
+    border-color: #ff4d6d;
+    background: rgba(255,77,109,0.12);
+  }
+
+  .class-badge-lithos {
+    color: #f5c518;
+    border-color: #f5c518;
+    background: rgba(245,197,24,0.12);
+  }
+
+  .class-badge-solitaire {
+    color: #e8eaf0;
+    border-color: #e8eaf0;
+    background: rgba(232,234,240,0.08);
+  }
+
+  .class-badge-petros {
+    color: #4d9eff;
+    border-color: #4d9eff;
+    background: rgba(77,158,255,0.12);
+  }
+
+  .class-badge-archpetros {
+    color: #00cfff;
+    border-color: #00cfff;
+    background: rgba(0,207,255,0.10);
+  }
+
   /* ── Submit ── */
   .submit-btn {
     background: var(--gold);
@@ -1461,8 +1491,14 @@
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   </div>
   <div class="dupe-name" id="dupe-name"></div>
-  <div class="dupe-label">Attendance has already been taken for this person today.</div>
+  <div class="dupe-label" id="dupe-label">Attendance has already been taken for this person today.</div>
   <div class="dupe-meta" id="dupe-meta"></div>
+  <div class="zoom-card" id="dupe-zoom-card" style="display:none;width:100%;max-width:340px;">
+    <div class="zoom-card-label">You're registered — here's your link</div>
+    <a href="https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09" target="_blank" style="color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;word-break:break-all;line-height:1.5;text-decoration:underline;">
+      https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09
+    </a>
+  </div>
   <div class="dupe-actions">
     <button class="dupe-cancel-btn" onclick="closeDupeOverlay()">Cancel</button>
     <button class="dupe-confirm-btn" onclick="confirmDupeSubmit()">Submit Anyway</button>
@@ -1534,7 +1570,7 @@
   const ZOOM_LINK    = 'https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09';
   const CHECKIN_URL  = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSd3-XY_WdvEApfMA7PeX9ctLMVj4ops3WFHqGA0RuPv-YE9ZQ/formResponse';
   const STREAM_URL   = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLScS9fUwyo_43FQX_GKGlSvWOn_dnxzETY1YOZJVU2owS1TvRA/formResponse';
-  const CLASS_STYLES = { psephos: 'psephos' };
+  const CLASS_STYLES = { psephos: 'psephos', tamite: 'tamite', lithos: 'lithos', solitaire: 'solitaire', petros: 'petros', archpetros: 'archpetros' };
 
   // ── State ──
   let database = [];
@@ -1988,9 +2024,14 @@
   function showDupeOverlay(name, existing, onConfirm) {
     document.getElementById('dupe-name').textContent = name;
     const existingTime = fmtTime(existing.timestamp);
-    const formLabel = existing.form === 'checkin' ? 'Check-in' : 'Stream';
+    const isStream = existing.form === 'stream';
+    const formLabel = isStream ? 'Stream' : 'In Person';
+    document.getElementById('dupe-label').textContent = isStream
+      ? "You've already registered for the stream today — here's your link:"
+      : 'Attendance has already been taken for this person today.';
     document.getElementById('dupe-meta').textContent =
       `Previously recorded: ${formLabel} · ${existingTime}`;
+    document.getElementById('dupe-zoom-card').style.display = isStream ? 'block' : 'none';
     _pendingSubmit = onConfirm;
     document.getElementById('dupe-overlay').classList.add('visible');
   }
