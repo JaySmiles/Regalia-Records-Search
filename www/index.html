@@ -1292,6 +1292,12 @@
 
 
 <script>
+  // ── Global error catcher ──
+  window.onerror = function(msg, src, line, col, err) {
+    document.body.style.cssText = 'background:#1e2028;color:#ff4d6d;font-family:monospace;padding:20px;font-size:14px;';
+    document.body.innerHTML = '<h2>JS ERROR</h2><p>' + msg + '</p><p>Line ' + line + ':' + col + '</p><pre>' + (err && err.stack ? err.stack : '') + '</pre>';
+    return true;
+  };
   // ── Constants ──
   const STORAGE_KEY  = 'regalia_db_v2';
   const ZOOM_LINK    = 'https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09';
@@ -1666,9 +1672,7 @@
     return false;
   }
 
-  // Lightweight connectivity probe
-
- — tries to fetch a tiny known-good resource
+  // Lightweight connectivity probe — tries to fetch a tiny known-good resource
   async function isConnected() {
     if (!navigator.onLine) return false;
     try {
