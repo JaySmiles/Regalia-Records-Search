@@ -181,15 +181,33 @@
   /* ── Pill Toggle ── */
   .pill-toggle {
     display: flex;
+    position: relative;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 50px;
     padding: 4px;
-    gap: 4px;
+  }
+
+  .pill-toggle::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: calc(50% - 4px);
+    background: var(--gold);
+    border-radius: 50px;
+    transition: transform 0.28s cubic-bezier(0.34, 1.2, 0.64, 1);
+    transform: translateX(0);
+    pointer-events: none;
+  }
+
+  .pill-toggle.visitor::before {
+    transform: translateX(calc(100% + 8px));
   }
 
   .pill-toggle button {
     flex: 1;
+    position: relative;
     background: none;
     border: none;
     border-radius: 50px;
@@ -198,11 +216,12 @@
     font-weight: 600;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: color 0.2s;
     font-family: inherit;
+    z-index: 1;
   }
 
-  .pill-toggle button.active { background: var(--gold); color: #000; }
+  .pill-toggle button.active { color: #000; }
 
   /* ── Search row ── */
   .search-row { display: flex; gap: 10px; align-items: stretch; }
@@ -925,6 +944,157 @@
   }
 
   body.splash-active .screen { visibility: hidden; }
+
+  /* ── Attendance Log ── */
+  .log-screen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .log-stats {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.73rem;
+    color: var(--muted);
+  }
+  .log-stats span { color: var(--gold); }
+
+  .log-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeIn 0.15s ease;
+  }
+
+  .log-entry-info { flex: 1; min-width: 0; }
+  .log-entry-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .log-entry-meta { font-size: 0.72rem; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+
+  .log-entry-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .log-entry-badge.checkin { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .log-entry-badge.stream  { background: var(--gold-dim); color: var(--gold); }
+
+  .log-export-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .log-export-btn:hover { opacity: 0.85; }
+
+  .log-search-box { position: relative; }
+  .log-search-box input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px 12px 42px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .log-search-box input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); }
+  .log-search-box input::placeholder { color: var(--muted); }
+  .log-search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+
+  .log-filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .log-filter-row select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 28px 7px 11px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.8rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7080' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    transition: border-color 0.2s;
+  }
+  .log-filter-row select:focus { border-color: var(--gold); }
+
+  .empty-log { text-align: center; color: var(--muted); padding: 48px 20px; font-size: 0.88rem; }
+
+  /* ── Duplicate Warning Overlay ── */
+  .dupe-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    background: rgba(14,15,17,0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    padding: 28px;
+    text-align: center;
+  }
+  .dupe-overlay.visible { opacity: 1; pointer-events: all; }
+  .dupe-icon {
+    width: 68px; height: 68px;
+    background: #7c3aed;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .dupe-name { font-size: 1.3rem; font-weight: 700; }
+  .dupe-label { font-size: 0.85rem; color: #c4b5fd; max-width: 290px; line-height: 1.55; }
+  .dupe-meta { font-size: 0.7rem; color: var(--muted); font-family: 'IBM Plex Mono', monospace; line-height: 1.6; max-width: 300px; }
+  .dupe-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .dupe-confirm-btn {
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.2s;
+  }
+  .dupe-confirm-btn:hover { opacity: 0.85; }
+  .dupe-cancel-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .dupe-cancel-btn:hover { border-color: var(--text); color: var(--text); }
 </style>
 </head>
 <body class="splash-active">
@@ -944,7 +1114,7 @@
 
   <div id="no-records-prompt" class="no-records-prompt">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-    <p><strong>No records loaded</strong>Load a file to unlock Check-in and Stream.</p>
+    <p><strong>No records loaded</strong>Load a file to unlock In Person and Stream.</p>
     <label class="load-records-btn">
       Load File
       <input type="file" accept=".xlsx,.xls,.csv" onchange="handleHomeFileLoad(this)">
@@ -955,7 +1125,7 @@
     <div class="home-card disabled" id="card-checkin" onclick="goTo('checkin')">
       <div class="home-card-icon">✅</div>
       <div class="home-card-text">
-        <h2>Check-in</h2>
+        <h2>In Person</h2>
         <p>Register in-person attendance</p>
       </div>
       <div style="position:relative;margin-left:auto;flex-shrink:0;">
@@ -981,6 +1151,15 @@
       <div class="home-card-text">
         <h2>Records Search</h2>
         <p>Look up members and copy TKNs</p>
+      </div>
+      <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+
+    <div class="home-card" onclick="goTo('log')">
+      <div class="home-card-icon">📋</div>
+      <div class="home-card-text">
+        <h2>Attendance Log</h2>
+        <p id="home-log-sub">Today's submissions — searchable &amp; exportable</p>
       </div>
       <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
     </div>
@@ -1034,7 +1213,7 @@
         <input class="form-field" type="text" id="checkin-tkn" readonly placeholder="Auto-filled">
       </div>
 
-      <button class="submit-btn" id="checkin-member-btn" onclick="submitCheckin('member')" disabled>Submit Check-in</button>
+      <button class="submit-btn" id="checkin-member-btn" onclick="submitCheckin('member')" disabled>Submit</button>
     </div>
 
     <!-- Visitor -->
@@ -1051,7 +1230,7 @@
         <label>Who Invited You?</label>
         <input class="form-field" type="text" id="ci-v-invited" placeholder="Enter name">
       </div>
-      <button class="submit-btn" onclick="submitCheckin('visitor')">Submit Check-in</button>
+      <button class="submit-btn" onclick="submitCheckin('visitor')">Submit</button>
     </div>
   </div>
 </div>
@@ -1233,6 +1412,64 @@
 
 
 <!-- ══════════════════════════════════════ -->
+<!-- ATTENDANCE LOG                        -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-log">
+  <div class="app-header">
+    <button class="back-btn" onclick="goTo('home')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
+    </button>
+    <img class="logo" src="logo.png" alt="Regalia Records">
+  </div>
+  <div class="container">
+    <div class="log-screen-header">
+      <div>
+        <div style="font-weight:700;font-size:1.05rem;margin-bottom:4px;">Attendance Log</div>
+        <div class="log-stats" id="log-stats">No submissions yet</div>
+      </div>
+      <button class="log-export-btn" onclick="exportLog()">Export XLSX</button>
+    </div>
+
+    <div class="log-search-box">
+      <svg class="log-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="log-search" placeholder="Search by name or TKN..." autocomplete="off" oninput="renderLog()">
+    </div>
+
+    <div class="log-filter-row">
+      <select id="log-date-filter" onchange="renderLog()">
+        <option value="">All Dates</option>
+      </select>
+      <select id="log-type-filter" onchange="renderLog()">
+        <option value="">All Types</option>
+        <option value="checkin">In Person</option>
+        <option value="stream">Stream</option>
+      </select>
+      <select id="log-mode-filter" onchange="renderLog()">
+        <option value="">Members &amp; Visitors</option>
+        <option value="member">Members only</option>
+        <option value="visitor">Visitors only</option>
+      </select>
+    </div>
+
+    <div id="log-list"></div>
+  </div>
+</div>
+
+<!-- Duplicate attendance warning -->
+<div class="dupe-overlay" id="dupe-overlay">
+  <div class="dupe-icon">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  </div>
+  <div class="dupe-name" id="dupe-name"></div>
+  <div class="dupe-label">Attendance has already been taken for this person today.</div>
+  <div class="dupe-meta" id="dupe-meta"></div>
+  <div class="dupe-actions">
+    <button class="dupe-cancel-btn" onclick="closeDupeOverlay()">Cancel</button>
+    <button class="dupe-confirm-btn" onclick="confirmDupeSubmit()">Submit Anyway</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
 <!-- QUEUE SCREEN                          -->
 <!-- ══════════════════════════════════════ -->
 <div class="screen" id="screen-queue">
@@ -1313,6 +1550,7 @@
     updateHomeCards();
     checkSavedBanner();
     updateQueueUI();
+    updateHomeLogSub();
     // Flush queue on launch if online
     if (navigator.onLine) flushQueue();
   });
@@ -1348,6 +1586,7 @@
     currentScreen = screen;
     if (screen === 'checkin' || screen === 'stream') requestWakeLock();
     if (screen === 'queue') renderQueueScreen();
+    if (screen === 'log')   renderLog();
     updateQueueUI();
   }
 
@@ -1431,6 +1670,7 @@
   function setMode(screen, mode) {
     const tog = document.getElementById(screen + '-toggle');
     tog.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', i === (mode === 'member' ? 0 : 1)));
+    tog.classList.toggle('visitor', mode === 'visitor');
     document.getElementById(screen + '-member').style.display = mode === 'member' ? 'flex' : 'none';
     document.getElementById(screen + '-visitor').style.display = mode === 'visitor' ? 'flex' : 'none';
   }
@@ -1541,7 +1781,7 @@
         <div class="queue-item-header">
           <div>
             <div class="queue-item-name">${item.name}</div>
-            <span class="queue-item-type">${item.form === 'checkin' ? 'In-Person' : 'Stream'} · ${item.mode}</span>
+            <span class="queue-item-type">${item.form === 'checkin' ? 'In Person' : 'Stream'} · ${item.mode}</span>
           </div>
           <button class="queue-delete-btn" onclick="removeFromQueue('${item.id}')">Delete</button>
         </div>
@@ -1679,27 +1919,227 @@
     if (currentScreen === 'queue') renderQueueScreen();
   });
 
+  // ── Attendance Log ──
+  const LOG_KEY = 'regalia_log_v1';
+  const LOG_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+  function getLog() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(LOG_KEY)) || { sessionStart: null, entries: [] };
+      // Expire if session started more than 24h ago
+      if (raw.sessionStart && (Date.now() - new Date(raw.sessionStart).getTime()) > LOG_TTL) {
+        localStorage.removeItem(LOG_KEY);
+        return { sessionStart: null, entries: [] };
+      }
+      return raw;
+    } catch(e) { return { sessionStart: null, entries: [] }; }
+  }
+
+  function saveLog(log) {
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(log)); } catch(e) {}
+  }
+
+  function addToLog(entry) {
+    const log = getLog();
+    if (!log.sessionStart) log.sessionStart = new Date().toISOString();
+    log.entries.push(entry);
+    saveLog(log);
+    updateHomeLogSub();
+  }
+
+  function updateHomeLogSub() {
+    const log = getLog();
+    const el = document.getElementById('home-log-sub');
+    if (!el) return;
+    const n = log.entries.length;
+    if (!n) { el.textContent = "Today's submissions — searchable & exportable"; return; }
+    const ci = log.entries.filter(e => e.form === 'checkin').length;
+    const st = log.entries.filter(e => e.form === 'stream').length;
+    el.textContent = `${n} submitted — ${ci} check-in, ${st} stream`;
+  }
+
+  // Check if a TKN (or visitor name) was already submitted today in a given form type
+  // Returns the existing entry if found, null otherwise
+  function findDuplicate(form, mode, identifier) {
+    const { entries } = getLog();
+    return entries.find(e =>
+      e.form === form &&
+      (mode === 'member' ? e.tkn === identifier : e.visitorName === identifier)
+    ) || null;
+  }
+
+  // Pending duplicate submission — stored while awaiting user confirmation
+  let _pendingSubmit = null;
+
+  function closeDupeOverlay() {
+    document.getElementById('dupe-overlay').classList.remove('visible');
+    _pendingSubmit = null;
+  }
+
+  function confirmDupeSubmit() {
+    document.getElementById('dupe-overlay').classList.remove('visible');
+    if (_pendingSubmit) {
+      const fn = _pendingSubmit;
+      _pendingSubmit = null;
+      fn();
+    }
+  }
+
+  function showDupeOverlay(name, existing, onConfirm) {
+    document.getElementById('dupe-name').textContent = name;
+    const existingTime = fmtTime(existing.timestamp);
+    const formLabel = existing.form === 'checkin' ? 'Check-in' : 'Stream';
+    document.getElementById('dupe-meta').textContent =
+      `Previously recorded: ${formLabel} · ${existingTime}`;
+    _pendingSubmit = onConfirm;
+    document.getElementById('dupe-overlay').classList.add('visible');
+  }
+
+  // Render the log screen
+  // Format a date as a session label: "Sunday Service - DD/MM/YYYY", "Midweek - DD/MM/YYYY", or "DD/MM/YYYY"
+  function fmtSessionDate(iso) {
+    const d = new Date(iso);
+    const day = d.getDay(); // 0=Sun, 4=Thu
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const dateStr = `${dd}/${mm}/${yyyy}`;
+    if (day === 0) return `Sunday Service - ${dateStr}`;
+    if (day === 4) return `Midweek - ${dateStr}`;
+    return dateStr;
+  }
+
+  // Get the YYYY-MM-DD date key from an ISO timestamp
+  function isoDateKey(iso) {
+    return new Date(iso).toISOString().slice(0, 10);
+  }
+
+  function renderLog() {
+    const log = getLog();
+    const entries = log.entries;
+    const list = document.getElementById('log-list');
+    const statsEl = document.getElementById('log-stats');
+    if (!list) return;
+
+    const q = (document.getElementById('log-search')?.value || '').toLowerCase();
+    const typeFilter = document.getElementById('log-type-filter')?.value || '';
+    const modeFilter = document.getElementById('log-mode-filter')?.value || '';
+    const dateFilter = document.getElementById('log-date-filter')?.value || '';
+
+    // Populate date dropdown from unique dates in entries
+    const dateSel = document.getElementById('log-date-filter');
+    if (dateSel) {
+      const uniqueDates = [...new Set(entries.map(e => isoDateKey(e.timestamp)))].sort().reverse();
+      const currentVal = dateSel.value;
+      dateSel.innerHTML = '<option value="">All Dates</option>' +
+        uniqueDates.map(dk => {
+          const label = fmtSessionDate(dk + 'T12:00:00');
+          return `<option value="${dk}"${dk === currentVal ? ' selected' : ''}>${label}</option>`;
+        }).join('');
+    }
+
+    let filtered = entries.filter(e => {
+      const nameMatch = (e.name || '').toLowerCase().includes(q) ||
+                        (e.tkn  || '').toLowerCase().includes(q);
+      const typeMatch = !typeFilter || e.form === typeFilter;
+      const modeMatch = !modeFilter || e.mode === modeFilter;
+      const dateMatch = !dateFilter || isoDateKey(e.timestamp) === dateFilter;
+      return nameMatch && typeMatch && modeMatch && dateMatch;
+    });
+
+    // Most recent first
+    filtered = [...filtered].reverse();
+
+    const ci = entries.filter(e => e.form === 'checkin').length;
+    const st = entries.filter(e => e.form === 'stream').length;
+    if (statsEl) {
+      statsEl.innerHTML = entries.length
+        ? `<span>${entries.length}</span> total · <span>${ci}</span> in person · <span>${st}</span> stream`
+        : 'No submissions yet';
+    }
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-log">${entries.length ? 'No results match your search.' : 'No submissions yet this session.'}</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(e => {
+      const badge = e.form === 'checkin'
+        ? '<span class="log-entry-badge checkin">In Person</span>'
+        : '<span class="log-entry-badge stream">Stream</span>';
+      const tknOrType = e.mode === 'member'
+        ? `TKN: ${e.tkn}`
+        : `Visitor`;
+      return `<div class="log-entry">
+        <div class="log-entry-info">
+          <div class="log-entry-name">${e.name}</div>
+          <div class="log-entry-meta">${tknOrType} · ${fmtTime(e.timestamp)}</div>
+        </div>
+        ${badge}
+      </div>`;
+    }).join('');
+  }
+
+  function exportLog() {
+    const { entries } = getLog();
+    if (!entries.length) { alert('No entries to export.'); return; }
+
+    const rows = entries.map(e => ({
+      'Name': e.name,
+      'TKN': e.tkn || '',
+      'Type': e.form === 'checkin' ? 'In Person' : 'Stream',
+      'Mode': e.mode === 'member' ? 'Member' : 'Visitor',
+      'Phone': e.phone || '',
+      'Invited By': e.invitedBy || '',
+      'Session': fmtSessionDate(e.timestamp),
+      'Timestamp': fmtTime(e.timestamp),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+    const date = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Regalia_Attendance_${date}.xlsx`);
+  }
+
   // ── Check-in Submit ──
   async function submitCheckin(mode) {
-    let name, fields;
+    let name, tkn = '', phone = '', invitedBy = '', fields;
     const timestamp = new Date().toISOString();
     const id = genUUID();
 
     if (mode === 'member') {
       if (!checkinSelected) return;
       name = checkinSelected.name;
-      fields = { mode:'member', page1Value:'Member', page2Fields: { 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn } };
+      tkn  = checkinSelected.tkn;
+      fields = { mode:'member', page1Value:'Member', page2Fields: { 'entry.481330014':name, 'entry.561268821':tkn } };
     } else {
-      name = document.getElementById('ci-v-name').value.trim();
+      name       = document.getElementById('ci-v-name').value.trim();
+      phone      = document.getElementById('ci-v-phone').value.trim();
+      invitedBy  = document.getElementById('ci-v-invited').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      fields = { mode:'visitor', page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() } };
+      fields = { mode:'visitor', page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':phone, 'entry.1351021626':invitedBy } };
     }
 
+    // Duplicate check
+    const dupeKey = mode === 'member' ? tkn : name;
+    const existing = findDuplicate('checkin', mode, dupeKey);
+    if (existing) {
+      showDupeOverlay(name, existing, () => doCheckinSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id));
+      return;
+    }
+    doCheckinSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id);
+  }
+
+  async function doCheckinSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id) {
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
     resetCheckin();
 
+    const logEntry = { id, form:'checkin', mode, name, tkn, phone, invitedBy, timestamp, visitorName: mode === 'visitor' ? name : undefined };
+
     if (!await isConnected()) {
       addToQueue({ id, form:'checkin', mode, name, fields, timestamp });
+      addToLog(logEntry);
       document.getElementById('ci-warning-name').textContent = name;
       document.getElementById('ci-warning-meta').textContent = metaText;
       document.getElementById('checkin-warning').classList.add('visible');
@@ -1709,12 +2149,14 @@
     const ok = await attemptPost(CHECKIN_URL, fields);
     if (!ok) {
       addToQueue({ id, form:'checkin', mode, name, fields, timestamp });
+      addToLog(logEntry);
       document.getElementById('ci-warning-name').textContent = name;
       document.getElementById('ci-warning-meta').textContent = metaText;
       document.getElementById('checkin-warning').classList.add('visible');
       return;
     }
 
+    addToLog(logEntry);
     document.getElementById('ci-success-name').textContent = name;
     document.getElementById('ci-success-meta').textContent = metaText;
     document.getElementById('checkin-success').classList.add('visible');
@@ -1734,24 +2176,41 @@
 
   // ── Stream Submit ──
   async function submitStream(mode) {
-    let name, fields;
+    let name, tkn = '', phone = '', invitedBy = '', fields;
     const timestamp = new Date().toISOString();
     const id = genUUID();
 
     if (mode === 'member') {
       if (!streamSelected) return;
       name = streamSelected.name;
-      fields = { mode:'member', page1Value:'Member', page2Fields: { 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn } };
+      tkn  = streamSelected.tkn;
+      fields = { mode:'member', page1Value:'Member', page2Fields: { 'entry.481330014':name, 'entry.561268821':tkn } };
     } else {
-      name = document.getElementById('st-v-name').value.trim();
+      name       = document.getElementById('st-v-name').value.trim();
+      phone      = document.getElementById('st-v-phone').value.trim();
+      invitedBy  = document.getElementById('st-v-invited').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      fields = { mode:'visitor', page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() } };
+      fields = { mode:'visitor', page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':phone, 'entry.1351021626':invitedBy } };
     }
 
+    // Duplicate check
+    const dupeKey = mode === 'member' ? tkn : name;
+    const existing = findDuplicate('stream', mode, dupeKey);
+    if (existing) {
+      showDupeOverlay(name, existing, () => doStreamSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id));
+      return;
+    }
+    doStreamSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id);
+  }
+
+  async function doStreamSubmit(mode, name, tkn, phone, invitedBy, fields, timestamp, id) {
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
+
+    const logEntry = { id, form:'stream', mode, name, tkn, phone, invitedBy, timestamp, visitorName: mode === 'visitor' ? name : undefined };
 
     if (!await isConnected()) {
       addToQueue({ id, form:'stream', mode, name, fields, timestamp });
+      addToLog(logEntry);
       document.getElementById('st-warning-name').textContent = name;
       document.getElementById('st-warning-meta').textContent = metaText;
       document.getElementById('stream-warning').classList.add('visible');
@@ -1762,6 +2221,7 @@
     const ok = await attemptPost(STREAM_URL, fields);
     if (!ok) {
       addToQueue({ id, form:'stream', mode, name, fields, timestamp });
+      addToLog(logEntry);
       document.getElementById('st-warning-name').textContent = name;
       document.getElementById('st-warning-meta').textContent = metaText;
       document.getElementById('stream-warning').classList.add('visible');
@@ -1769,6 +2229,7 @@
       return;
     }
 
+    addToLog(logEntry);
     document.getElementById('st-success-name').textContent = name;
     document.getElementById('st-success-meta').textContent = metaText;
     document.getElementById('stream-success').classList.add('visible');
