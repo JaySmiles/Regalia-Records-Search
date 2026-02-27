@@ -1553,10 +1553,21 @@
     `).join('');
   }
 
-  // ── Form Submission ──
-  // Primary: @capacitor-community/http — makes a true native HTTP request
-  // outside the WebView, bypassing all CORS/no-cors WebView restrictions.
-  // Fallback: hidden iframe form POST for browser/preview environments.
+  // ── Multi-page Google Form Submission ──
+  // Page 0: Member/Visitor (entry.336694999)
+  // Page 1: Members — Name (entry.481330014), TKN (entry.561268821)
+  // Page 2: Visitors — Full name (entry.1242330493), Who invited (entry.1351021626), Phone (entry.1740110440)
+  // Each POST needs fvv=1, fbzx=<seed>, pageHistory, and navigate=1 for page transitions.
+
+  function genFbzx() {
+    return '-' + String(Math.floor(Math.random() * 9e15));
+  }
+
+  function encodeFields(obj) {
+    return Object.entries(obj)
+      .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(String(v)))
+      .join('&');
+  }
 
   // ── Debug toast (remove after confirming submissions work) ──
   function dbg(msg, color) {
@@ -1569,93 +1580,95 @@
     setTimeout(() => t.remove(), 8000);
   }
 
-  function submitViaIframe(url, obj) {
-    ['_gf_iframe', '_gf_form'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.remove();
+  async function nativePost(url, fields) {
+    const Http = window.Capacitor?.Plugins?.CapacitorHttp;
+    if (!Http) return null;
+    const data = encodeFields(fields);
+    dbg('POST: ' + data.slice(0, 100), '#d4af37');
+    const res = await Http.request({
+      method: 'POST',
+      url,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      data,
     });
+    dbg('status=' + res.status, '#22c55e');
+    return res.status;
+  }
 
+  function iframePost(url, fields) {
+    ['_gf_iframe','_gf_form'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
     const iframe = document.createElement('iframe');
-    iframe.id = '_gf_iframe';
-    iframe.name = '_gf_iframe';
+    iframe.id = '_gf_iframe'; iframe.name = '_gf_iframe';
     iframe.style.cssText = 'display:none;position:absolute;width:0;height:0;';
     document.body.appendChild(iframe);
-
     const form = document.createElement('form');
-    form.id = '_gf_form';
-    form.method = 'POST';
-    form.action = url;
-    form.target = '_gf_iframe';
+    form.id = '_gf_form'; form.method = 'POST'; form.action = url; form.target = '_gf_iframe';
     form.style.display = 'none';
+    Object.entries(fields).forEach(([k,v]) => {
+      const i = document.createElement('input'); i.type='hidden'; i.name=k; i.value=v; form.appendChild(i);
+    });
+    document.body.appendChild(form);
+    dbg('IFRAME: ' + Object.keys(fields).join(', '), '#00e5c0');
+    form.submit();
+    setTimeout(() => form.remove(), 500);
+    return new Promise(r => setTimeout(() => r(200), 3000));
+  }
 
-    Object.entries(obj).forEach(([k, v]) => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = k;
-      input.value = v;
-      form.appendChild(input);
+  async function postPage(url, fields) {
+    try {
+      const status = await nativePost(url, fields);
+      if (status !== null) return status;
+    } catch(e) { dbg('nativePost err: ' + e.message, '#ff4d6d'); }
+    return await iframePost(url, fields);
+  }
+
+  async function submitMultiPage(baseUrl, submissionData) {
+    const fbzx = genFbzx();
+    const tokens = { fvv: '1', fbzx };
+
+    // Step 1 — page 0: submit Member/Visitor selection
+    dbg('Step 1: ' + submissionData.page1Value, '#d4af37');
+    await postPage(baseUrl, {
+      'entry.336694999': submissionData.page1Value,
+      ...tokens,
+      pageHistory: '0',
+      navigate: '1',
     });
 
-    document.body.appendChild(form);
-    const bodyStr = Object.entries(obj).map(([k,v]) => k+'='+v).join(' | ');
-    dbg('IFRAME POST: ' + bodyStr, '#00e5c0');
-    form.submit();
-    setTimeout(() => { form.remove(); }, 500);
-    return new Promise(resolve => setTimeout(() => resolve(true), 3000));
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Step 2 — page 1 (member) or page 2 (visitor): submit actual data
+    const pageIndex = submissionData.mode === 'member' ? '1' : '2';
+    dbg('Step 2: page ' + pageIndex, '#d4af37');
+    const s2 = await postPage(baseUrl, {
+      ...submissionData.page2Fields,
+      ...tokens,
+      pageHistory: '0,' + pageIndex,
+    });
+
+    dbg('Done, status=' + s2, s2 === 200 ? '#22c55e' : '#ff4d6d');
+    return s2 === 200;
   }
 
-  async function submitViaCapacitorHttp(url, obj) {
-    try {
-      const Http = window.Capacitor?.Plugins?.CapacitorHttp || window.CapacitorHttp;
-      if (!Http) {
-        dbg('CapacitorHttp: NOT AVAILABLE — using iframe', '#d4af37');
-        return null;
-      }
-      dbg('CapacitorHttp: plugin found, sending...', '#d4af37');
-
-      const data = Object.entries(obj)
-        .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
-        .join('&');
-
-      dbg('DATA: ' + data.slice(0, 120), '#d4af37');
-
-      const res = await Http.request({
-        method: 'POST',
-        url,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        data,
-      });
-      dbg('CapacitorHttp: status=' + res.status, res.status === 200 ? '#22c55e' : '#ff4d6d');
-      return true;
-    } catch(e) {
-      dbg('CapacitorHttp ERROR: ' + e.message, '#ff4d6d');
-      return false;
-    }
-  }
-
-  async function attemptPost(url, obj) {
-    dbg('attemptPost called, fields: ' + Object.keys(obj).join(', '));
+  async function attemptPost(url, submissionData) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const nativeResult = await submitViaCapacitorHttp(url, obj);
-        if (nativeResult === true) return true;
-        if (nativeResult === false) {
-          if (attempt === 2) return false;
-          await new Promise(r => setTimeout(r, 1000));
-          continue;
-        }
-        // null = plugin not available, use iframe
-        return await submitViaIframe(url, obj);
-      } catch(e) {
-        dbg('attemptPost catch: ' + e.message, '#ff4d6d');
+        const ok = await submitMultiPage(url, submissionData);
+        if (ok) return true;
         if (attempt === 2) return false;
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 1500));
+      } catch(e) {
+        dbg('attemptPost err: ' + e.message, '#ff4d6d');
+        if (attempt === 2) return false;
+        await new Promise(r => setTimeout(r, 1500));
       }
     }
     return false;
   }
 
-  // Lightweight connectivity probe — tries to fetch a tiny known-good resource
+  // Lightweight connectivity probe
+
+ — tries to fetch a tiny known-good resource
   async function isConnected() {
     if (!navigator.onLine) return false;
     try {
@@ -1699,11 +1712,11 @@
     if (mode === 'member') {
       if (!checkinSelected) return;
       name = checkinSelected.name;
-      fields = { 'entry.336694999':'Member', 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn, 'entry.1242330493':'', 'entry.1740110440':'', 'entry.1351021626':'' };
+      fields = { mode:'member', page1Value:'Member', page2Fields: { 'entry.481330014':checkinSelected.name, 'entry.561268821':checkinSelected.tkn } };
     } else {
       name = document.getElementById('ci-v-name').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      fields = { 'entry.336694999':'Visitor', 'entry.481330014':'', 'entry.561268821':'', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() };
+      fields = { mode:'visitor', page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':document.getElementById('ci-v-phone').value.trim(), 'entry.1351021626':document.getElementById('ci-v-invited').value.trim() } };
     }
 
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
@@ -1752,11 +1765,11 @@
     if (mode === 'member') {
       if (!streamSelected) return;
       name = streamSelected.name;
-      fields = { 'entry.336694999':'Member', 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn, 'entry.1242330493':'', 'entry.1740110440':'', 'entry.1351021626':'' };
+      fields = { mode:'member', page1Value:'Member', page2Fields: { 'entry.481330014':streamSelected.name, 'entry.561268821':streamSelected.tkn } };
     } else {
       name = document.getElementById('st-v-name').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      fields = { 'entry.336694999':'Visitor', 'entry.481330014':'', 'entry.561268821':'', 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() };
+      fields = { mode:'visitor', page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':document.getElementById('st-v-phone').value.trim(), 'entry.1351021626':document.getElementById('st-v-invited').value.trim() } };
     }
 
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
