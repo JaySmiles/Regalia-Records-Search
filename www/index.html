@@ -2013,15 +2013,19 @@
     const fbzx = genFbzx();
     const tokens = { fvv: '1', fbzx };
 
-    // Zone is page 0, Member/Visitor is page 1, details are page 2/3
-    const pageIndex = submissionData.mode === 'member' ? '1' : '2';
+    // Form page structure:
+    // Page 0: Zone (entry.1190370796)
+    // Page 1: Member or Visitor (entry.336694999)
+    // Page 2: Members branch (name, tkn)
+    // Page 3: Visitors branch (full name, phone, invited by)
+    const pageHistory = submissionData.mode === 'member' ? '0,1,2' : '0,1,3';
     const zoneField = submissionData.zone ? { [ZONE_ENTRY]: submissionData.zone } : {};
     const s = await postPage(baseUrl, {
       ...zoneField,
       'entry.336694999': submissionData.page1Value,
       ...submissionData.page2Fields,
       ...tokens,
-      pageHistory: '0,' + pageIndex,
+      pageHistory,
     });
 
     return s === 200;
