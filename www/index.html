@@ -1342,7 +1342,7 @@
 <!-- ══════════════════════════════════════ -->
 <!-- ZONE SELECTION                        -->
 <!-- ══════════════════════════════════════ -->
-<div class="screen active" id="screen-zone">
+<div class="screen active" style="display:flex" id="screen-zone">
   <div class="zone-logo-wrap">
     <img src="logo.png" alt="Regalia Records">
   </div>
@@ -1367,7 +1367,7 @@
 <!-- ══════════════════════════════════════ -->
 <!-- REP NAME                              -->
 <!-- ══════════════════════════════════════ -->
-<div class="screen" id="screen-rep">
+<div class="screen" style="display:none" id="screen-rep">
   <div class="rep-logo-wrap">
     <img src="logo.png" alt="Regalia Records">
   </div>
@@ -1385,7 +1385,7 @@
 
 <!-- HOME                                  -->
 <!-- ══════════════════════════════════════ -->
-<div class="screen" id="screen-home">
+<div class="screen" style="display:none" id="screen-home">
   <div class="home-logo-wrap">
     <img src="logo.png" alt="Regalia Records">
   </div>
@@ -1541,7 +1541,7 @@
 <!-- ══════════════════════════════════════ -->
 <!-- RECORDS SEARCH                        -->
 <!-- ══════════════════════════════════════ -->
-<div class="screen" id="screen-records">
+<div class="screen" style="display:none" id="screen-records">
   <div class="app-header">
     <button class="back-btn" onclick="goTo('home')">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
@@ -1633,7 +1633,7 @@
 <!-- ══════════════════════════════════════ -->
 <!-- ATTENDANCE LOG                        -->
 <!-- ══════════════════════════════════════ -->
-<div class="screen" id="screen-log">
+<div class="screen" style="display:none" id="screen-log">
   <div class="app-header">
     <button class="back-btn" onclick="goTo('home')">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
@@ -1697,7 +1697,7 @@
 <!-- ══════════════════════════════════════ -->
 <!-- QUEUE SCREEN                          -->
 <!-- ══════════════════════════════════════ -->
-<div class="screen" id="screen-queue">
+<div class="screen" style="display:none" id="screen-queue">
   <div class="app-header">
     <button class="back-btn" onclick="goTo('home')">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg> Home
@@ -1872,8 +1872,13 @@
   let currentScreen = 'home';
 
   function goTo(screen) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen-' + screen).classList.add('active');
+    document.querySelectorAll('.screen').forEach(s => {
+      s.classList.remove('active');
+      s.style.display = 'none';
+    });
+    const target = document.getElementById('screen-' + screen);
+    target.classList.add('active');
+    target.style.display = 'flex';
     window.scrollTo(0, 0);
     if (screen === 'home') {
       releaseWakeLock();
