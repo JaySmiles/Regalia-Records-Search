@@ -1339,50 +1339,6 @@
 </div>
 
 <!-- ══════════════════════════════════════ -->
-<!-- ══════════════════════════════════════ -->
-<!-- ZONE SELECTION                        -->
-<!-- ══════════════════════════════════════ -->
-<div class="screen active" style="display:flex" id="screen-zone">
-  <div class="zone-logo-wrap">
-    <img src="logo.png" alt="Regalia Records">
-  </div>
-  <div class="zone-title">Attendance</div>
-  <div class="zone-heading">Select Your Zone</div>
-  <div class="zone-buttons">
-    <button class="zone-btn" onclick="selectZone('Accra')">
-      <span class="zone-btn-icon">📍</span> Accra
-    </button>
-    <button class="zone-btn" onclick="selectZone('Kumasi')">
-      <span class="zone-btn-icon">📍</span> Kumasi
-    </button>
-    <button class="zone-btn" onclick="selectZone('Ho')">
-      <span class="zone-btn-icon">📍</span> Ho
-    </button>
-    <button class="zone-btn" onclick="selectZone('Cape Coast')">
-      <span class="zone-btn-icon">📍</span> Cape Coast
-    </button>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════ -->
-<!-- REP NAME                              -->
-<!-- ══════════════════════════════════════ -->
-<div class="screen" style="display:none" id="screen-rep">
-  <div class="rep-logo-wrap">
-    <img src="logo.png" alt="Regalia Records">
-  </div>
-  <div class="rep-title">Attendance</div>
-  <div class="rep-heading">Who's taking attendance?</div>
-  <div class="rep-sub">Enter your name to continue</div>
-  <div class="rep-input-wrap">
-    <input class="rep-input" type="text" id="rep-name-input" placeholder="Your full name"
-      autocomplete="off" list="rep-name-suggestions"
-      oninput="onRepInput()" onkeydown="if(event.key==='Enter')confirmRep()">
-    <datalist id="rep-name-suggestions"></datalist>
-    <button class="rep-continue-btn" id="rep-continue-btn" onclick="confirmRep()" disabled>Continue</button>
-  </div>
-</div>
-
 <!-- HOME                                  -->
 <!-- ══════════════════════════════════════ -->
 <div class="screen" style="display:none" id="screen-home">
@@ -1444,13 +1400,6 @@
   </div>
 
   <div class="container">
-    <!-- Zone + Rep bar -->
-    <div class="zone-bar">
-      <div class="zone-bar-left" style="gap:16px;">
-        <div>
-          <div class="zone-bar-label">Zone</div>
-          <div class="zone-bar-value" id="checkin-zone-display">—</div>
-        </div>
         <div style="width:1px;background:rgba(255,255,255,0.1);align-self:stretch;"></div>
         <div class="rep-bar-item">
           <div class="rep-bar-label">Rep</div>
@@ -1479,10 +1428,6 @@
 
     <!-- Member -->
     <div id="checkin-member" style="display:flex;flex-direction:column;gap:16px;">
-      <div class="form-group">
-        <label>Zone</label>
-        <input class="zone-field-locked" type="text" id="member-zone-field" readonly>
-      </div>
       <div class="search-row">
         <div class="autocomplete-wrap">
           <div class="search-box">
@@ -1516,10 +1461,6 @@
 
     <!-- Visitor -->
     <div id="checkin-visitor" style="display:none;flex-direction:column;gap:16px;">
-      <div class="form-group">
-        <label>Zone</label>
-        <input class="zone-field-locked" type="text" id="visitor-zone-field" readonly>
-      </div>
       <div class="form-group">
         <label>Full Name</label>
         <input class="form-field" type="text" id="ci-v-name" placeholder="Enter full name">
@@ -1747,7 +1688,7 @@
   const REP_HISTORY_KEY = 'regalia_rep_history_v1';
   const ZONES        = ['Accra', 'Kumasi', 'Ho', 'Cape Coast'];
   const ZONE_ENTRY   = 'entry.1190370796';
-  const CHECKIN_URL  = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSepKufbC4Ey1pE1szKKYFaOYx8uqx_KBTQR3TzJ0wX6K6l71Q/formResponse';
+  const CHECKIN_URL  = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSdgYwiyxESYtghUQBJ5MD3Yl_yhDi9YMJGzOf4S_nGQvKAjsQ/formResponse';
   const CLASS_STYLES = { psephos: 'psephos', tamite: 'tamite', lithos: 'lithos', solitaire: 'solitaire', petros: 'petros', archpetros: 'archpetros' };
 
   // ── State ──
@@ -1784,26 +1725,12 @@
 
   // ── Zone ──
   function initZone() {
-    if (!selectedZone || !ZONES.includes(selectedZone)) {
-      goTo('zone');
-      return;
-    }
-    activateZone(selectedZone, false);
-    if (!repName) {
-      goTo('rep');
-      return;
-    }
-    updateRepDisplay();
     goTo('home');
   }
 
   function selectZone(zone) {
     activateZone(zone, true);
-    if (!repName) {
-      goTo('rep');
-    } else {
-      goTo('home');
-    }
+    goTo('home');
   }
 
   function changeZone(zone) {
@@ -2158,10 +2085,8 @@
     // Page 1: Member or Visitor (entry.336694999)
     // Page 2: Members branch (name, tkn)
     // Page 3: Visitors branch (full name, phone, invited by)
-    const pageHistory = submissionData.mode === 'member' ? '0,1,2' : '0,1,3';
-    const zoneField = submissionData.zone ? { [ZONE_ENTRY]: submissionData.zone } : {};
+    const pageHistory = submissionData.mode === 'member' ? '0,1' : '0,2';
     const s = await postPage(baseUrl, {
-      ...zoneField,
       'entry.336694999': submissionData.page1Value,
       ...submissionData.page2Fields,
       ...tokens,
@@ -2435,13 +2360,13 @@
       if (!checkinSelected) return;
       name = checkinSelected.name;
       tkn  = checkinSelected.tkn;
-      fields = { mode:'member', zone, page1Value:'Member', page2Fields: { 'entry.481330014':name, 'entry.561268821':tkn } };
+      fields = { mode:'member', page1Value:'Member', page2Fields: { 'entry.481330014':name, 'entry.561268821':tkn } };
     } else {
       name       = document.getElementById('ci-v-name').value.trim();
       phone      = document.getElementById('ci-v-phone').value.trim();
       invitedBy  = document.getElementById('ci-v-invited').value.trim();
       if (!name) { alert('Please enter a name.'); return; }
-      fields = { mode:'visitor', zone, page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':phone, 'entry.1351021626':invitedBy } };
+      fields = { mode:'visitor', page1Value:'Visitor', page2Fields: { 'entry.1242330493':name, 'entry.1740110440':phone, 'entry.1351021626':invitedBy } };
     }
 
     // Duplicate check
