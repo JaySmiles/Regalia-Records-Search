@@ -58,14 +58,8 @@ jobs:
           MAIN=$(find android -name "MainActivity.java" -o -name "MainActivity.kt" 2>/dev/null | head -1)
           echo "MainActivity: $MAIN"
           if [[ "$MAIN" == *.kt ]]; then
-            sed -i 's/import com.getcapacitor.BridgeActivity/import com.getcapacitor.BridgeActivity
-import com.capacitorjs.plugins.app.AppPlugin
-import com.getcapacitor.community.http.HttpPlugin/' "$MAIN"
-            sed -i '/class MainActivity/a\  override fun onCreate(savedInstanceState: android.os.Bundle?) {
-    registerPlugin(AppPlugin::class.java)
-    registerPlugin(HttpPlugin::class.java)
-    super.onCreate(savedInstanceState)
-  }' "$MAIN" || true
+            sed -i 's/import com.getcapacitor.BridgeActivity/import com.getcapacitor.BridgeActivity\nimport com.capacitorjs.plugins.app.AppPlugin\nimport com.getcapacitor.community.http.HttpPlugin/' "$MAIN"
+            sed -i '/class MainActivity/a\  override fun onCreate(savedInstanceState: android.os.Bundle?) {\n    registerPlugin(AppPlugin::class.java)\n    registerPlugin(HttpPlugin::class.java)\n    super.onCreate(savedInstanceState)\n  }' "$MAIN" || true
           fi
           echo "Plugin registration done"
 
