@@ -1231,6 +1231,90 @@
   .zone-dropdown-item:hover { background: rgba(212,175,55,0.1); color: var(--gold); }
   .zone-dropdown-item.active { color: var(--gold); font-weight: 600; }
 
+  /* ── Rep Screen ── */
+  #screen-rep {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 24px;
+    gap: 0;
+  }
+  .rep-logo-wrap { margin-bottom: 12px; }
+  .rep-logo-wrap img { width: min(220px, 60vw); height: auto; }
+  .rep-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .rep-heading {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .rep-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+    text-align: center;
+  }
+  .rep-input-wrap {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .rep-input {
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 1rem;
+    font-family: inherit;
+    padding: 15px 18px;
+    outline: none;
+    transition: border-color 0.18s;
+  }
+  .rep-input:focus { border-color: var(--gold); }
+  .rep-input::placeholder { color: var(--muted); }
+  .rep-continue-btn {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    padding: 15px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .rep-continue-btn:active { opacity: 0.85; }
+  .rep-continue-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Rep bar on check-in (extends zone bar) ── */
+  .rep-bar-item { display: flex; flex-direction: column; }
+  .rep-bar-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 1px; }
+  .rep-bar-value { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+
+  /* ── Sync status dot ── */
+  .sync-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #555;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .sync-dot.synced { background: #00e5a0; }
+  .sync-dot.syncing { background: var(--gold); }
+  .sync-dot.error { background: #ff4d6d; }
+
   /* Locked zone field in form */
   .zone-field-locked {
     background: rgba(212,175,55,0.06);
@@ -1277,6 +1361,25 @@
     <button class="zone-btn" onclick="selectZone('Cape Coast')">
       <span class="zone-btn-icon">📍</span> Cape Coast
     </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- REP NAME                              -->
+<!-- ══════════════════════════════════════ -->
+<div class="screen" id="screen-rep">
+  <div class="rep-logo-wrap">
+    <img src="logo.png" alt="Regalia Records">
+  </div>
+  <div class="rep-title">Attendance</div>
+  <div class="rep-heading">Who's taking attendance?</div>
+  <div class="rep-sub">Enter your name to continue</div>
+  <div class="rep-input-wrap">
+    <input class="rep-input" type="text" id="rep-name-input" placeholder="Your full name"
+      autocomplete="off" list="rep-name-suggestions"
+      oninput="onRepInput()" onkeydown="if(event.key==='Enter')confirmRep()">
+    <datalist id="rep-name-suggestions"></datalist>
+    <button class="rep-continue-btn" id="rep-continue-btn" onclick="confirmRep()" disabled>Continue</button>
   </div>
 </div>
 
@@ -1342,16 +1445,25 @@
   </div>
 
   <div class="container">
-    <!-- Zone bar -->
+    <!-- Zone + Rep bar -->
     <div class="zone-bar">
-      <div class="zone-bar-left">
+      <div class="zone-bar-left" style="gap:16px;">
         <div>
           <div class="zone-bar-label">Zone</div>
           <div class="zone-bar-value" id="checkin-zone-display">—</div>
         </div>
+        <div style="width:1px;background:rgba(255,255,255,0.1);align-self:stretch;"></div>
+        <div class="rep-bar-item">
+          <div class="rep-bar-label">Rep</div>
+          <div class="rep-bar-value" id="checkin-rep-display">—</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;margin-left:4px;" title="Sync status">
+          <div class="sync-dot" id="sync-dot"></div>
+        </div>
       </div>
-      <div style="position:relative;">
-        <button class="zone-change-btn" onclick="toggleZoneDropdown(event)">Change Zone ▾</button>
+      <div style="display:flex;gap:6px;position:relative;">
+        <button class="zone-change-btn" onclick="toggleZoneDropdown(event)">Zone ▾</button>
+        <button class="zone-change-btn" onclick="openChangeRep()">Rep ✎</button>
         <div class="zone-dropdown" id="zone-dropdown">
           <div class="zone-dropdown-item" onclick="changeZone('Accra')">Accra</div>
           <div class="zone-dropdown-item" onclick="changeZone('Kumasi')">Kumasi</div>
@@ -1632,8 +1744,10 @@
   const STORAGE_KEY  = 'regalia_db_v2';
   const ZOOM_LINK    = 'https://us06web.zoom.us/j/9124480533?pwd=aHF6MlhBSGJqUnpXeWpMNWJMVzd3UT09';
   const ZONE_KEY     = 'regalia_zone_v1';
+  const REP_KEY      = 'regalia_rep_v1';
+  const REP_HISTORY_KEY = 'regalia_rep_history_v1';
   const ZONES        = ['Accra', 'Kumasi', 'Ho', 'Cape Coast'];
-  const ZONE_ENTRY   = 'entry.1190370796'; // ← replace with real entry ID when form is ready
+  const ZONE_ENTRY   = 'entry.1190370796';
   const CHECKIN_URL  = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSepKufbC4Ey1pE1szKKYFaOYx8uqx_KBTQR3TzJ0wX6K6l71Q/formResponse';
   const CLASS_STYLES = { psephos: 'psephos', tamite: 'tamite', lithos: 'lithos', solitaire: 'solitaire', petros: 'petros', archpetros: 'archpetros' };
 
@@ -1644,6 +1758,18 @@
   let currentFileName = '';
   let checkinSelected = null;
   let selectedZone    = localStorage.getItem(ZONE_KEY) || null;
+  let repName         = localStorage.getItem(REP_KEY)  || null;
+
+  // Firebase stubs — implemented in second script after SDK loads
+  let _sharedEntries = [];
+  function initFirebase(zone)                      { /* implemented after Firebase SDK */ }
+  function pushToSharedLog(entry)                  { /* implemented after Firebase SDK */ }
+  function findSharedDuplicate(form, mode, id)     { return null; }
+  function populateRepSuggestions()                { /* implemented after Firebase SDK */ }
+  function updateRepDisplay()                      {
+    const el = document.getElementById('checkin-rep-display');
+    if (el) el.textContent = repName || '—';
+  }
 
   // ── Init ──
   window.addEventListener('DOMContentLoaded', () => {
@@ -1659,19 +1785,26 @@
 
   // ── Zone ──
   function initZone() {
-    if (selectedZone && ZONES.includes(selectedZone)) {
-      // Zone already saved — go straight to home
-      activateZone(selectedZone, false);
-      goTo('home');
-    } else {
-      // No zone — show zone selection
+    if (!selectedZone || !ZONES.includes(selectedZone)) {
       goTo('zone');
+      return;
     }
+    activateZone(selectedZone, false);
+    if (!repName) {
+      goTo('rep');
+      return;
+    }
+    updateRepDisplay();
+    goTo('home');
   }
 
   function selectZone(zone) {
     activateZone(zone, true);
-    goTo('home');
+    if (!repName) {
+      goTo('rep');
+    } else {
+      goTo('home');
+    }
   }
 
   function changeZone(zone) {
@@ -1694,6 +1827,8 @@
     document.querySelectorAll('.zone-dropdown-item').forEach(el => {
       el.classList.toggle('active', el.textContent.trim() === zone);
     });
+    // Init Firebase for this zone
+    initFirebase(zone);
   }
 
   function toggleZoneDropdown(e) {
@@ -1749,6 +1884,7 @@
       requestWakeLock();
       if (selectedZone) activateZone(selectedZone, false);
     }
+    if (screen === 'rep') populateRepSuggestions();
     if (screen === 'queue') renderQueueScreen();
     if (screen === 'log')   renderLog();
     updateQueueUI();
@@ -2108,13 +2244,13 @@
     log.entries.push(entry);
     saveLog(log);
     updateHomeLogSub();
+    pushToSharedLog(entry);
   }
 
   function updateHomeLogSub() {
-    const log = getLog();
     const el = document.getElementById('home-log-sub');
     if (!el) return;
-    const n = log.entries.length;
+    const n = getMergedEntries().length;
     if (!n) { el.textContent = "Today's submissions — searchable & exportable"; return; }
     el.textContent = `${n} submitted today`;
   }
@@ -2123,10 +2259,12 @@
   // Returns the existing entry if found, null otherwise
   function findDuplicate(form, mode, identifier) {
     const { entries } = getLog();
-    return entries.find(e =>
+    const local = entries.find(e =>
       e.form === form &&
       (mode === 'member' ? e.tkn === identifier : e.visitorName === identifier)
     ) || null;
+    if (local) return local;
+    return findSharedDuplicate(form, mode, identifier) || null;
   }
 
   // Pending duplicate submission — stored while awaiting user confirmation
@@ -2180,9 +2318,18 @@
     return new Date(iso).toISOString().slice(0, 10);
   }
 
+  function getMergedEntries() {
+    const local = getLog().entries;
+    const localIds = new Set(local.map(e => e.id));
+    // Add shared entries not already in local log, marking them as remote
+    const remote = _sharedEntries
+      .filter(e => !localIds.has(e.id))
+      .map(e => ({ ...e, _remote: true }));
+    return [...local, ...remote];
+  }
+
   function renderLog() {
-    const log = getLog();
-    const entries = log.entries;
+    const allEntries = getMergedEntries();
     const list = document.getElementById('log-list');
     const statsEl = document.getElementById('log-stats');
     if (!list) return;
@@ -2192,10 +2339,10 @@
     const modeFilter = document.getElementById('log-mode-filter')?.value || '';
     const dateFilter = document.getElementById('log-date-filter')?.value || '';
 
-    // Populate date dropdown from unique dates in entries
+    // Populate date dropdown from unique dates in all entries
     const dateSel = document.getElementById('log-date-filter');
     if (dateSel) {
-      const uniqueDates = [...new Set(entries.map(e => isoDateKey(e.timestamp)))].sort().reverse();
+      const uniqueDates = [...new Set(allEntries.map(e => isoDateKey(e.timestamp)))].sort().reverse();
       const currentVal = dateSel.value;
       dateSel.innerHTML = '<option value="">All Dates</option>' +
         uniqueDates.map(dk => {
@@ -2204,7 +2351,7 @@
         }).join('');
     }
 
-    let filtered = entries.filter(e => {
+    let filtered = allEntries.filter(e => {
       const nameMatch = (e.name || '').toLowerCase().includes(q) ||
                         (e.tkn  || '').toLowerCase().includes(q);
       const typeMatch = !typeFilter || e.form === typeFilter;
@@ -2214,18 +2361,17 @@
     });
 
     // Most recent first
-    filtered = [...filtered].reverse();
+    filtered = [...filtered].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    const ci = entries.filter(e => e.form === 'checkin').length;
-    const st = entries.filter(e => e.form === 'stream').length;
+    const ci = allEntries.filter(e => e.form === 'checkin').length;
     if (statsEl) {
-      statsEl.innerHTML = entries.length
-        ? `<span>${entries.length}</span> total · <span>${ci}</span> in person · <span>${st}</span> stream`
+      statsEl.innerHTML = allEntries.length
+        ? `<span>${allEntries.length}</span> total · <span>${ci}</span> in person`
         : 'No submissions yet';
     }
 
     if (!filtered.length) {
-      list.innerHTML = `<div class="empty-log">${entries.length ? 'No results match your search.' : 'No submissions yet this session.'}</div>`;
+      list.innerHTML = `<div class="empty-log">${allEntries.length ? 'No results match your search.' : 'No submissions yet this session.'}</div>`;
       return;
     }
 
@@ -2233,13 +2379,12 @@
       const badge = e.form === 'checkin'
         ? '<span class="log-entry-badge checkin">In Person</span>'
         : '<span class="log-entry-badge stream">Stream</span>';
-      const tknOrType = e.mode === 'member'
-        ? `TKN: ${e.tkn}`
-        : `Visitor`;
+      const tknOrType = e.mode === 'member' ? `TKN: ${e.tkn}` : `Visitor`;
+      const submittedBy = e.rep ? `· by ${e.rep}` : '';
       return `<div class="log-entry">
         <div class="log-entry-info">
           <div class="log-entry-name">${e.name}</div>
-          <div class="log-entry-meta">${tknOrType} · ${fmtTime(e.timestamp)}</div>
+          <div class="log-entry-meta">${tknOrType} · ${fmtTime(e.timestamp)} ${submittedBy}</div>
         </div>
         ${badge}
       </div>`;
@@ -2247,19 +2392,23 @@
   }
 
   function exportLog() {
-    const { entries } = getLog();
-    if (!entries.length) { alert('No entries to export.'); return; }
+    const allEntries = getMergedEntries();
+    if (!allEntries.length) { alert('No entries to export.'); return; }
 
-    const rows = entries.map(e => ({
-      'Name': e.name,
-      'TKN': e.tkn || '',
-      'Type': e.form === 'checkin' ? 'In Person' : 'Stream',
-      'Mode': e.mode === 'member' ? 'Member' : 'Visitor',
-      'Phone': e.phone || '',
-      'Invited By': e.invitedBy || '',
-      'Session': fmtSessionDate(e.timestamp),
-      'Timestamp': fmtTime(e.timestamp),
-    }));
+    const rows = allEntries
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      .map(e => ({
+        'Name':        e.name,
+        'TKN':         e.tkn        || '',
+        'Type':        e.form === 'checkin' ? 'In Person' : 'Stream',
+        'Mode':        e.mode === 'member'  ? 'Member'    : 'Visitor',
+        'Phone':       e.phone      || '',
+        'Invited By':  e.invitedBy  || '',
+        'Session':     fmtSessionDate(e.timestamp),
+        'Timestamp':   fmtTime(e.timestamp),
+        'Submitted By': e.rep       || '',
+        'Zone':        e.zone       || '',
+      }));
 
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -2551,6 +2700,138 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
   }
+</script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+// ── Firebase Config ──
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBMZo2grU1T66qD7Aijki50-eEaGMEc7S8",
+  authDomain:        "regalia-attendance.firebaseapp.com",
+  databaseURL:       "https://regalia-attendance-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "regalia-attendance",
+  storageBucket:     "regalia-attendance.firebasestorage.app",
+  messagingSenderId: "1050380733995",
+  appId:             "1:1050380733995:web:3d811631477d7bda3ce46e"
+};
+
+// ── Rep Name ──
+function getRepHistory() {
+  try { return JSON.parse(localStorage.getItem(REP_HISTORY_KEY)) || []; } catch(e) { return []; }
+}
+
+function saveRepToHistory(name) {
+  const history = getRepHistory().filter(n => n.toLowerCase() !== name.toLowerCase());
+  history.unshift(name);
+  localStorage.setItem(REP_HISTORY_KEY, JSON.stringify(history.slice(0, 10)));
+}
+
+function populateRepSuggestions() {
+  const dl = document.getElementById('rep-name-suggestions');
+  if (!dl) return;
+  const history = getRepHistory();
+  dl.innerHTML = history.map(n => `<option value="${n}">`).join('');
+}
+
+function onRepInput() {
+  const val = document.getElementById('rep-name-input').value.trim();
+  document.getElementById('rep-continue-btn').disabled = val.length === 0;
+}
+
+function confirmRep() {
+  const val = document.getElementById('rep-name-input').value.trim();
+  if (!val) return;
+  repName = val;
+  localStorage.setItem(REP_KEY, val);
+  saveRepToHistory(val);
+  updateRepDisplay();
+  goTo('home');
+}
+
+function openChangeRep() {
+  const input = document.getElementById('rep-name-input');
+  if (input) input.value = repName || '';
+  populateRepSuggestions();
+  onRepInput();
+  goTo('rep');
+}
+
+// ── Firebase Shared Zone Log ──
+let _fbApp = null;
+let _fbDb  = null;
+let _zoneRef = null;
+let _fbListener = null;
+
+function setSyncDot(state) {
+  const dot = document.getElementById('sync-dot');
+  if (!dot) return;
+  dot.className = 'sync-dot' + (state ? ' ' + state : '');
+}
+
+function isFirebaseConfigured() {
+  return FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_API_KEY';
+}
+
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// Override stubs from first script
+initFirebase = function(zone) {
+  if (!isFirebaseConfigured()) { setSyncDot('error'); return; }
+  try {
+    if (!_fbApp) {
+      _fbApp = firebase.initializeApp(FIREBASE_CONFIG);
+      _fbDb  = firebase.database(_fbApp);
+    }
+    if (_zoneRef && _fbListener) _zoneRef.off('value', _fbListener);
+    const safeZone = zone.replace(/\s+/g, '_');
+    _zoneRef = _fbDb.ref(`attendance/${safeZone}/${getTodayKey()}`);
+    setSyncDot('syncing');
+    _fbListener = _zoneRef.on('value', snap => {
+      _sharedEntries = Object.values(snap.val() || {});
+      setSyncDot('synced');
+      if (typeof renderLog === 'function') renderLog();
+      updateHomeLogSub();
+    }, err => { console.warn('Firebase error:', err); setSyncDot('error'); });
+  } catch(e) { console.warn('Firebase init error:', e); setSyncDot('error'); }
+};
+
+pushToSharedLog = function(entry) {
+  if (!_zoneRef || !isFirebaseConfigured()) return;
+  _zoneRef.child(entry.id).set({
+    id:          entry.id,
+    form:        entry.form,
+    mode:        entry.mode,
+    name:        entry.name,
+    tkn:         entry.tkn         || '',
+    visitorName: entry.visitorName || '',
+    timestamp:   entry.timestamp,
+    rep:         repName           || 'Unknown',
+    zone:        selectedZone      || ''
+  }).catch(e => console.warn('Firebase push error:', e));
+};
+
+findSharedDuplicate = function(form, mode, identifier) {
+  return _sharedEntries.find(e =>
+    e.form === form &&
+    (mode === 'member' ? e.tkn === identifier : e.visitorName === identifier)
+  ) || null;
+};
+
+updateRepDisplay = function() {
+  const el = document.getElementById('checkin-rep-display');
+  if (el) el.textContent = repName || '—';
+};
+
+// Init rep display on load
+document.addEventListener('DOMContentLoaded', () => {
+  updateRepDisplay();
+});
 </script>
 </body>
 </html>
