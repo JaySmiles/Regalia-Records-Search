@@ -24,6 +24,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Generate keystore (one-time setup)
+        run: |
+          keytool -genkey -v -keystore regalia.keystore -alias regalia \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Regalia, OU=App, O=Regalia, L=Accra, ST=Greater Accra, C=GH" \
+            -storepass regaliakey123 -keypass regaliakey123
+          echo "===BASE64START==="
+          base64 regalia.keystore
+          echo "===BASE64END==="
+
       - name: Install dependencies
         run: npm install
 
@@ -42,6 +52,28 @@ jobs:
 
       - name: Sync web assets
         run: npx cap sync android
+
+      - name: Register Capacitor plugins
+        run: |
+          MAIN=$(find android -name "MainActivity.java" -o -name "MainActivity.kt" 2>/dev/null | head -1)
+          echo "MainActivity: $MAIN"
+          if [[ "$MAIN" == *.kt ]]; then
+            sed -i 's/import com.getcapacitor.BridgeActivity/import com.getcapacitor.BridgeActivity
+import com.capacitorjs.plugins.app.AppPlugin
+import com.getcapacitor.community.http.HttpPlugin/' "$MAIN"
+            sed -i '/class MainActivity/a\  override fun onCreate(savedInstanceState: android.os.Bundle?) {
+    registerPlugin(AppPlugin::class.java)
+    registerPlugin(HttpPlugin::class.java)
+    super.onCreate(savedInstanceState)
+  }' "$MAIN" || true
+          fi
+          echo "Plugin registration done"
+
+      - name: Set version
+        run: |
+          sed -i 's/versionCode [0-9]*/versionCode 42/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.7"/' android/app/build.gradle
+          echo "Version set to: $(grep -E 'versionCode|versionName' android/app/build.gradle)"
 
       - name: Set app name
         run: |
