@@ -2380,7 +2380,7 @@
         ? '<span class="log-entry-badge checkin">In Person</span>'
         : '<span class="log-entry-badge stream">Stream</span>';
       const tknOrType = e.mode === 'member' ? `TKN: ${e.tkn}` : `Visitor`;
-      const submittedBy = e.rep ? `· by ${e.rep}` : '';
+      const submittedBy = e.rep ? `· <span style="color:#fff;">by ${e.rep}</span>` : '';
       return `<div class="log-entry">
         <div class="log-entry-info">
           <div class="log-entry-name">${e.name}</div>
