@@ -89,6 +89,12 @@ jobs:
               print(f'Done {folder}')
           "
 
+      - name: Disable minification
+        run: |
+          sed -i 's/minifyEnabled true/minifyEnabled false/g' android/app/build.gradle
+          sed -i 's/shrinkResources true/shrinkResources false/g' android/app/build.gradle
+          echo "Minification disabled"
+
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
