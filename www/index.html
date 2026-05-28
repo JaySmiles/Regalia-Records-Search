@@ -1367,14 +1367,7 @@
     }
     if (screen === 'rep') populateRepSuggestions();
     if (screen === 'queue') renderQueueScreen();
-    if (screen === 'log')   { 
-      const todayKey = `${getMeetingType()}|${selectedZone}|${getTodayKey()}`;
-      if (!_selectedLogDateKey) _selectedLogDateKey = todayKey;
-      populateDateDropdown(_cachedDates); 
-      const selEl = document.getElementById('log-date-filter');
-      if (selEl) selEl.value = _selectedLogDateKey;
-      switchLogDate();
-    }
+    if (screen === 'log')   { populateDateDropdown(_cachedDates, _allFirebaseData); renderLog(); updateLogMinisteringBanner(); }
     updateQueueUI();
   }
 
@@ -2777,19 +2770,16 @@ initFirebase = function(zone) {
         });
         _cachedDates = sortedKeys;
         
-        const sel = _selectedLogDateKey || todayKey;
-        
         // Always extract session meta for TODAY (used by check-in screen)
         const todayData = _allFirebaseData[todayKey] || {};
         _currentSessionMeta = todayData._sessionMeta || null;
-        
-        populateDateDropdown(sortedKeys);
-        
-        // freshEntries must filter out _sessionMeta
+
+        populateDateDropdown(sortedKeys, _allFirebaseData);
+
+        // freshEntries: load from currently selected date in dropdown
+        const sel = document.getElementById('log-date-filter')?.value || todayKey;
         const selData = _allFirebaseData[sel] || _allFirebaseData[todayKey] || {};
-        const rawEntries = Object.values(selData);
-        const freshEntries = rawEntries.filter(e => e && e.id && e.timestamp);
-        const freshIds = new Set(freshEntries.map(e => e.id));
+        const freshEntries = Object.values(selData).filter(e => e && e.id && e.timestamp);
 
         // Build a set of ALL known Firebase IDs across all dates we have cached
         // This lets us safely remove deleted entries from the local log
@@ -2827,11 +2817,11 @@ initFirebase = function(zone) {
   initAutoFlush();
 };
 
-function populateDateDropdown(keys) {
+function populateDateDropdown(keys, allData = null) {
   const sel = document.getElementById('log-date-filter');
   if (!sel) return;
   const todayKey = `${getMeetingType()}|${selectedZone}|${getTodayKey()}`;
-  const current = _selectedLogDateKey || sel.value || todayKey;
+  const current = sel.value || todayKey;
   const allKeys = keys.includes(todayKey) ? keys : [todayKey, ...keys];
   const seen = new Set();
   const unique = allKeys.filter(k => { if (seen.has(k)) return false; seen.add(k); return true; });
@@ -2840,14 +2830,12 @@ function populateDateDropdown(keys) {
     const [y, m, day] = date.split('-').map(Number);
     const dd = String(day).padStart(2, '0');
     const mm = String(m).padStart(2, '0');
-    let label = `${getMeetingLabel(type)} - ${dd}/${mm}/${y}`;
-    
-    // Use custom meeting name if available
-    const sessionData = _allFirebaseData[k];
-    if (sessionData && sessionData._sessionMeta && sessionData._sessionMeta.name) {
-      label = `${sessionData._sessionMeta.name} - ${dd}/${mm}/${y}`;
+    let cName = '';
+    const src = allData || _allFirebaseData;
+    if (src && src[k] && src[k]['_sessionMeta'] && src[k]['_sessionMeta'].name) {
+      cName = src[k]['_sessionMeta'].name;
     }
-    
+    const label = cName ? `${cName} - ${dd}/${mm}/${y}` : `${getMeetingLabel(type)} - ${dd}/${mm}/${y}`;
     return `<option value="${k}" ${k === current ? 'selected' : ''}>${label}</option>`;
   }).join('');
 }
@@ -2855,12 +2843,29 @@ function populateDateDropdown(keys) {
 function switchLogDate() {
   const key = document.getElementById('log-date-filter')?.value || `${getMeetingType()}|${selectedZone}|${getTodayKey()}`;
   _selectedLogDateKey = key;
-  const selData = _allFirebaseData[key] || {};
-  // Extract shared entries excluding _sessionMeta
-  _sharedEntries = Object.values(selData).filter(e => e && e.id && e.timestamp);
-  deriveMinisteringFromAttendance();
-  if (typeof renderLog === 'function') renderLog();
-  updateLogMinisteringBanner();
+  if (!_fbDb) {
+    // Offline fallback — read from cache
+    const selData = _allFirebaseData[key] || {};
+    _sharedEntries = Object.values(selData).filter(e => e && e.id && e.timestamp);
+    deriveMinisteringFromAttendance();
+    if (typeof renderLog === 'function') renderLog();
+    updateLogMinisteringBanner();
+    return;
+  }
+  const [type, zone, date] = key.split('|');
+  setSyncDot('syncing');
+  _fbDb.ref(`attendance/${type}/${zone}/${date}`).once('value', snap => {
+    const data = snap.val() || {};
+    // Update cache with fresh data
+    _allFirebaseData[key] = data;
+    _sharedEntries = Object.values(data).filter(e => e && e.id && e.timestamp);
+    const meta = data['_sessionMeta'] || {};
+    _customMeetingName = meta.name || '';
+    setSyncDot('synced');
+    deriveMinisteringFromAttendance();
+    if (typeof renderLog === 'function') renderLog();
+    updateLogMinisteringBanner();
+  }, err => { console.warn('Firebase date switch error:', err); setSyncDot('error'); });
 }
 
 pushToSharedLog = function(entry) {
