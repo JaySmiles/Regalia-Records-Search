@@ -1367,7 +1367,14 @@
     }
     if (screen === 'rep') populateRepSuggestions();
     if (screen === 'queue') renderQueueScreen();
-    if (screen === 'log')   { populateDateDropdown(_cachedDates); renderLog(); updateLogMinisteringBanner(); }
+    if (screen === 'log')   { 
+      const todayKey = `${getMeetingType()}|${selectedZone}|${getTodayKey()}`;
+      if (!_selectedLogDateKey) _selectedLogDateKey = todayKey;
+      populateDateDropdown(_cachedDates); 
+      const selEl = document.getElementById('log-date-filter');
+      if (selEl) selEl.value = _selectedLogDateKey;
+      switchLogDate();
+    }
     updateQueueUI();
   }
 
@@ -1944,7 +1951,14 @@
   }
 
   function getMergedEntries() {
-    const local = getLog().entries.filter(e => e && e.id && e.timestamp);
+    const dateFilter = _selectedLogDateKey || document.getElementById('log-date-filter')?.value || '';
+    const filterDate = dateFilter ? dateFilter.split('|')[2] : getTodayKey();
+
+    const local = getLog().entries.filter(e => {
+      if (!e || !e.id || !e.timestamp) return false;
+      const entryDate = e.timestamp.slice(0, 10);
+      return entryDate === filterDate;
+    });
     const localIds = new Set(local.map(e => e.id));
     const remote = _sharedEntries
       .filter(e => e && e.id && e.timestamp && !localIds.has(e.id) && !_skippedQueueIds.has(e.id))
@@ -2704,6 +2718,7 @@ let _allDatesRef = null;
 let _allDatesListener = null;
 let _cachedDates = [];
 let _allFirebaseData = {};
+let _selectedLogDateKey = '';
 let _currentSessionMeta = null;
 
 initFirebase = function(zone) {
@@ -2752,7 +2767,7 @@ initFirebase = function(zone) {
         });
         _cachedDates = sortedKeys;
         
-        const sel = document.getElementById('log-date-filter')?.value || todayKey;
+        const sel = _selectedLogDateKey || todayKey;
         
         // Always extract session meta for TODAY (used by check-in screen)
         const todayData = _allFirebaseData[todayKey] || {};
@@ -2806,7 +2821,7 @@ function populateDateDropdown(keys) {
   const sel = document.getElementById('log-date-filter');
   if (!sel) return;
   const todayKey = `${getMeetingType()}|${selectedZone}|${getTodayKey()}`;
-  const current = sel.value || todayKey;
+  const current = _selectedLogDateKey || sel.value || todayKey;
   const allKeys = keys.includes(todayKey) ? keys : [todayKey, ...keys];
   const seen = new Set();
   const unique = allKeys.filter(k => { if (seen.has(k)) return false; seen.add(k); return true; });
@@ -2828,19 +2843,14 @@ function populateDateDropdown(keys) {
 }
 
 function switchLogDate() {
-  if (!_fbDb) return;
   const key = document.getElementById('log-date-filter')?.value || `${getMeetingType()}|${selectedZone}|${getTodayKey()}`;
-  const [type, zone, date] = key.split('|');
-  setSyncDot('syncing');
-  _fbDb.ref(`attendance/${type}/${zone}/${date}`).once('value', snap => {
-    const rawData = snap.val() || {};
-    // Extract shared entries excluding _sessionMeta
-    _sharedEntries = Object.values(rawData).filter(e => e && e.id && e.timestamp);
-    setSyncDot('synced');
-    deriveMinisteringFromAttendance();
-    if (typeof renderLog === 'function') renderLog();
-    updateLogMinisteringBanner();
-  }, err => { console.warn('Firebase date switch error:', err); setSyncDot('error'); });
+  _selectedLogDateKey = key;
+  const selData = _allFirebaseData[key] || {};
+  // Extract shared entries excluding _sessionMeta
+  _sharedEntries = Object.values(selData).filter(e => e && e.id && e.timestamp);
+  deriveMinisteringFromAttendance();
+  if (typeof renderLog === 'function') renderLog();
+  updateLogMinisteringBanner();
 }
 
 pushToSharedLog = function(entry) {
@@ -2954,7 +2964,7 @@ function updateMinisteringUI() {
   if (!setCard || !bar) return;
 
   // We show the bar if EITHER ministering data or meeting name is set
-  if (_ministeringData || _currentSessionMeta) {
+  if (_ministeringData || (_currentSessionMeta && _currentSessionMeta.name)) {
     setCard.style.display = 'none';
     bar.style.display = 'flex';
     
@@ -3218,7 +3228,7 @@ function updateLogMinisteringBanner() {
   
   const displayMeetingName = customName || fallbackName;
   
-  if (_ministeringData || displayMeetingName) {
+  if (_ministeringData || customName) {
     banner.style.display = 'flex';
     
     if (meetingNameEl) {
