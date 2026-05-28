@@ -54,6 +54,13 @@ jobs:
           sed -i 's/versionName "[^"]*"/versionName "1.8.12"/' android/app/build.gradle
           echo "Version set to: $(grep -E 'versionCode|versionName' android/app/build.gradle)"
 
+      - name: Insert version into HTML
+        run: |
+          VERSION=$(grep -E "versionName" android/app/build.gradle | sed -E "s/.*versionName \"([^\"]+)\".*/\1/")
+          sed -i "s/v{{VERSION}}/v${VERSION}/g" www/index.html
+          echo "Injected version ${VERSION} into index.html"
+
+
       - name: Set app name
         run: |
           sed -i 's|<string name="app_name">.*</string>|<string name="app_name">Regalia Records Search</string>|g' android/app/src/main/res/values/strings.xml
