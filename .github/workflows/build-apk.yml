@@ -48,10 +48,20 @@ jobs:
       - name: Sync web assets
         run: npx cap sync android
 
-      - name: Set version
+      - name: Bump version (non‑major)
         run: |
-          sed -i 's/versionCode [0-9]*/versionCode 43/' android/app/build.gradle
-          sed -i 's/versionName "[^"]*"/versionName "1.8.12"/' android/app/build.gradle
+          # Extract current versionName (e.g., 1.8.12) and versionCode
+          CURRENT_NAME=$(grep -E 'versionName' android/app/build.gradle | sed -E 's/.*versionName "?([^" ]+)"?.*/\1/')
+          CURRENT_CODE=$(grep -E 'versionCode' android/app/build.gradle | sed -E 's/.*versionCode ([0-9]+).*/\1/')
+          # Split into components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_NAME"
+          PATCH=$((PATCH+1))
+          NEW_NAME="${MAJOR}.${MINOR}.${PATCH}"
+          NEW_CODE=$((CURRENT_CODE+1))
+          # Apply updates
+          sed -i "s/versionCode [0-9]*/versionCode ${NEW_CODE}/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"${NEW_NAME}\"/" android/app/build.gradle
+          echo "Bumped version to ${NEW_NAME} (code ${NEW_CODE})"
           echo "Version set to: $(grep -E 'versionCode|versionName' android/app/build.gradle)"
 
       - name: Insert version into HTML
