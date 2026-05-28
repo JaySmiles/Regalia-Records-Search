@@ -1,0 +1,111 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up signing keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > regalia.keystore
+          echo "Keystore ready"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Bundle XLSX library offline
+        run: |
+          curl -L "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" -o www/xlsx.full.min.js
+          echo "XLSX bundled: $(wc -c < www/xlsx.full.min.js) bytes"
+
+      - name: Remove Google Fonts dependency
+        run: |
+          sed -i 's|<link href="https://fonts.googleapis.com[^"]*">||g' www/index.html
+          echo "Google Fonts removed."
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync web assets
+        run: npx cap sync android
+
+      - name: Set version
+        run: |
+          sed -i 's/versionCode [0-9]*/versionCode 42/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.7"/' android/app/build.gradle
+          echo "Version set to: $(grep -E 'versionCode|versionName' android/app/build.gradle)"
+
+      - name: Set app name
+        run: |
+          sed -i 's|<string name="app_name">.*</string>|<string name="app_name">Regalia Records Search</string>|g' android/app/src/main/res/values/strings.xml
+          echo "App name set to: $(grep app_name android/app/src/main/res/values/strings.xml)"
+
+      - name: Override icons with custom logo
+        run: |
+          pip install Pillow --break-system-packages -q
+          python3 -c "
+          from PIL import Image
+          import os
+          sizes = {'mipmap-mdpi':48,'mipmap-hdpi':72,'mipmap-xhdpi':96,'mipmap-xxhdpi':144,'mipmap-xxxhdpi':192}
+          img = Image.open('www/icon-512.png').convert('RGBA')
+          for folder, size in sizes.items():
+              path = f'android/app/src/main/res/{folder}'
+              os.makedirs(path, exist_ok=True)
+              bg = Image.new('RGBA', (size,size), (14,15,17,255))
+              bg.paste(img.resize((size,size), Image.LANCZOS), (0,0), img.resize((size,size), Image.LANCZOS))
+              out = bg.convert('RGB')
+              out.save(f'{path}/ic_launcher.png')
+              out.save(f'{path}/ic_launcher_round.png')
+              out.save(f'{path}/ic_launcher_foreground.png')
+              print(f'Done {folder}')
+          "
+
+      - name: Add storage permissions to AndroidManifest
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />|' "$MANIFEST"
+          echo "Permissions added: $(grep -c 'uses-permission' $MANIFEST) permissions"
+
+      - name: Disable minification
+        run: |
+          sed -i 's/minifyEnabled true/minifyEnabled false/g' android/app/build.gradle
+          sed -i 's/shrinkResources true/shrinkResources false/g' android/app/build.gradle
+          echo "Minification disabled"
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build signed APK
+        run: |
+          cd android
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/regalia.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEYSTORE_PASSWORD }}
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Regalia-Records-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
