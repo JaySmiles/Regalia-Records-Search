@@ -2720,6 +2720,7 @@ let _cachedDates = [];
 let _allFirebaseData = {};
 let _selectedLogDateKey = '';
 let _currentSessionMeta = null;
+let _lastInitZone = '';
 
 initFirebase = function(zone) {
   if (!isFirebaseConfigured()) { setSyncDot('error'); return; }
@@ -2732,6 +2733,15 @@ initFirebase = function(zone) {
 
     // Set _zoneRef to today's path for writing new entries (zone-scoped)
     _zoneRef = _fbDb.ref(`attendance/${_fbPathKey}/${zone}/${getTodayKey()}`);
+
+    // If zone hasn't changed and listeners are already attached, skip full re-init
+    // This prevents wiping _allFirebaseData when navigating between screens
+    if (zone === _lastInitZone && _activeFbListeners && _activeFbListeners.length) {
+      initMinistering(zone);
+      initAutoFlush();
+      return;
+    }
+    _lastInitZone = zone;
 
     // Init ministering listener
     initMinistering(zone);
