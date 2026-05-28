@@ -45,9 +45,6 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Sync web assets
-        run: npx cap sync android
-
       - name: Increment patch version and update HTML
         run: |
           # Extract current version (vMAJOR.MINOR.PATCH) from the home page
@@ -66,6 +63,9 @@ jobs:
           sed -i "s/versionCode [0-9]*/versionCode ${CODE}/" android/app/build.gradle
           sed -i "s/versionName \"[^\"]*\"/versionName \"${NEW_VERSION}\"/" android/app/build.gradle
           echo "Version bump applied: ${NEW_VERSION} (code ${CODE})"
+
+      - name: Sync web assets
+        run: npx cap sync android
 
 
       - name: Set app name
