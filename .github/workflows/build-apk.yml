@@ -48,27 +48,24 @@ jobs:
       - name: Sync web assets
         run: npx cap sync android
 
-      - name: Bump version (non‑major)
+      - name: Increment patch version and update HTML
         run: |
-          # Extract current versionName (e.g., 1.8.12) and versionCode
-          CURRENT_NAME=$(grep -E 'versionName' android/app/build.gradle | sed -E 's/.*versionName "?([^" ]+)"?.*/\1/')
-          CURRENT_CODE=$(grep -E 'versionCode' android/app/build.gradle | sed -E 's/.*versionCode ([0-9]+).*/\1/')
-          # Split into components
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_NAME"
-          PATCH=$((PATCH+1))
-          NEW_NAME="${MAJOR}.${MINOR}.${PATCH}"
-          NEW_CODE=$((CURRENT_CODE+1))
-          # Apply updates
-          sed -i "s/versionCode [0-9]*/versionCode ${NEW_CODE}/" android/app/build.gradle
-          sed -i "s/versionName \"[^\"]*\"/versionName \"${NEW_NAME}\"/" android/app/build.gradle
-          echo "Bumped version to ${NEW_NAME} (code ${NEW_CODE})"
-          echo "Version set to: $(grep -E 'versionCode|versionName' android/app/build.gradle)"
-
-      - name: Insert version into HTML
-        run: |
-          VERSION=$(grep -E "versionName" android/app/build.gradle | sed -E "s/.*versionName \"([^\"]+)\".*/\1/")
-          sed -i "s/v{{VERSION}}/v${VERSION}/g" www/index.html
-          echo "Injected version ${VERSION} into index.html"
+          # Extract current version (vMAJOR.MINOR.PATCH) from the home page
+          CURRENT=$(grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+' www/index.html | head -1)
+          MAJOR=$(echo $CURRENT | cut -d. -f1)
+          MINOR=$(echo $CURRENT | cut -d. -f2)
+          PATCH=$(echo $CURRENT | cut -d. -f3)
+          # Increment patch for a non‑major bug‑fix update
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          # Update the version string in the HTML file
+          sed -i "s/v[0-9]\+\.[0-9]\+\.[0-9]\+/v${NEW_VERSION}/" www/index.html
+          # Compute versionCode (offset 31 to ensure it's higher than previous manual 43)
+          CODE=$((NEW_PATCH + 31))
+          # Apply versionCode and versionName to Gradle
+          sed -i "s/versionCode [0-9]*/versionCode ${CODE}/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"${NEW_VERSION}\"/" android/app/build.gradle
+          echo "Version bump applied: ${NEW_VERSION} (code ${CODE})"
 
 
       - name: Set app name
