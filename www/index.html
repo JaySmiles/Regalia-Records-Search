@@ -18,7 +18,7 @@
 <script src="xlsx.full.min.js"></script>
 <style>
   /* ─────────────────────────────────────────
-     Regalia Attendance — Material You v1.8.12
+     Regalia Attendance — Material You v1.8.13
      Themes applied via JS setProperty()
   ───────────────────────────────────────── */
 
@@ -778,7 +778,7 @@
       <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
     </div>
   </div>
-  <div style="text-align:center;margin-top:24px;font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;">v1.8.12</div>
+  <div style="text-align:center;margin-top:24px;font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;">v1.8.13</div>
   <div id="records-sync-status" style="text-align:center;font-size:0.7rem;margin-top:4px;font-family:'IBM Plex Mono',monospace;opacity:0;transition:opacity 0.4s;"></div>
 </div>
 <!-- ══════════════════════════════════════ -->
@@ -832,7 +832,7 @@
     <div id="ministering-bar" class="ministering-bar" style="display:none;">
       <div class="ministering-bar-left">
         <div id="ministering-bar-meeting-name" style="font-weight:600; font-size:1.1rem; color:var(--md-on-surf); margin-bottom:8px; display:none;"></div>
-        <div class="ministering-bar-label">Ministering Today</div>
+        <div class="ministering-bar-label" id="ministering-bar-label">Ministering Today</div>
         <div class="ministering-bar-value" id="ministering-bar-name">—</div>
         <div id="ministering-bar-class" style="margin-top:4px;"></div>
         <div class="ministering-bar-type" id="ministering-bar-type"></div>
@@ -2984,26 +2984,37 @@ function updateMinisteringUI() {
     bar.style.display = 'flex';
     
     const nameEl = document.getElementById('ministering-bar-meeting-name');
-    if (_currentSessionMeta && _currentSessionMeta.name) {
-      nameEl.style.display = 'block';
-      nameEl.textContent = _currentSessionMeta.name;
-    } else {
-      nameEl.style.display = 'none';
+    if (nameEl) {
+      if (_currentSessionMeta && _currentSessionMeta.name) {
+        nameEl.style.display = 'block';
+        nameEl.textContent = _currentSessionMeta.name;
+      } else {
+        nameEl.style.display = 'none';
+      }
     }
 
+    const labelEl = document.getElementById('ministering-bar-label') || document.getElementById('ministering-bar-name')?.previousElementSibling;
+    const valueEl = document.getElementById('ministering-bar-name');
+    const typeEl  = document.getElementById('ministering-bar-type');
+
     if (_ministeringData) {
-      document.getElementById('ministering-bar-name').textContent = _ministeringData.name;
+      if (valueEl) {
+        valueEl.textContent = _ministeringData.name;
+        valueEl.style.display = 'block';
+      }
       const clsEl = document.getElementById('ministering-bar-class');
       if (clsEl) clsEl.innerHTML = _ministeringData.cls ? getClassBadge(_ministeringData.cls) : '';
-      document.getElementById('ministering-bar-type').textContent = _ministeringData.type || '';
-      document.getElementById('ministering-bar-label').style.display = 'block';
-      document.getElementById('ministering-bar-name').style.display = 'block';
+      if (typeEl) typeEl.textContent = _ministeringData.type || '';
+      if (labelEl) labelEl.style.display = 'block';
     } else {
-      document.getElementById('ministering-bar-label').style.display = 'none';
-      document.getElementById('ministering-bar-name').style.display = 'none';
+      if (labelEl) labelEl.style.display = 'none';
+      if (valueEl) {
+        valueEl.style.display = 'none';
+        valueEl.textContent = '';
+      }
       const clsEl = document.getElementById('ministering-bar-class');
       if (clsEl) clsEl.innerHTML = '';
-      document.getElementById('ministering-bar-type').textContent = '';
+      if (typeEl) typeEl.textContent = '';
     }
   } else {
     bar.style.display = 'none';
