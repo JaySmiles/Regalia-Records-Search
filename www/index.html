@@ -1732,7 +1732,7 @@
       // For members with TKN: check Firebase first before submitting to Forms
       if (item.mode === 'member' && item.tkn && _fbDb) {
         try {
-          const isDup = await checkTknDuplicate(item.tkn);
+          const isDup = await checkTknDuplicate(item.tkn, item.timestamp, item.id);
           if (isDup) {
             // Already in Firebase — discard queued entry, don't submit to Forms
             removeFromQueue(item.id);
@@ -1755,7 +1755,7 @@
         // appeared between our check and our Firebase write
         if (item.mode === 'member' && item.tkn && _fbDb) {
           try {
-            const resolved = await resolveTknDuplicate(item.tkn);
+            const resolved = await resolveTknDuplicate(item.tkn, item.timestamp);
             skipped += resolved;
           } catch(e) { console.warn('Post-submit resolve error:', e); }
         }
@@ -1780,22 +1780,25 @@
 
   // Check Firebase for an existing entry with this TKN.
   // Returns the existing entry if found, null if not.
-  async function checkTknDuplicate(tkn) {
+  // Excludes this device's own entry (same itemId) to avoid self-matching.
+  async function checkTknDuplicate(tkn, itemTimestamp, itemId) {
     if (!_fbDb || !tkn || !selectedZone) return null;
-    const today   = getTodayKey();
-    const typeKey = getMeetingType();
-    const snap    = await _fbDb.ref(`attendance/${typeKey}/${selectedZone}/${today}`).once('value');
+    const ts      = itemTimestamp ? new Date(itemTimestamp) : new Date();
+    const dateKey = `${ts.getFullYear()}-${String(ts.getMonth()+1).padStart(2,'0')}-${String(ts.getDate()).padStart(2,'0')}`;
+    const typeKey = getMeetingType(ts);
+    const snap    = await _fbDb.ref(`attendance/${typeKey}/${selectedZone}/${dateKey}`).once('value');
     const entries = Object.values(snap.val() || {});
-    return entries.find(e => e.tkn === tkn) || null;
+    return entries.find(e => e.tkn === tkn && e.id !== itemId) || null;
   }
 
   // After a submit, scan for TKN duplicates and delete the later-timestamp entry.
   // Returns count of entries removed.
-  async function resolveTknDuplicate(tkn) {
+  async function resolveTknDuplicate(tkn, itemTimestamp) {
     if (!_fbDb || !tkn || !selectedZone) return 0;
-    const today   = getTodayKey();
-    const typeKey = getMeetingType();
-    const zoneRef = _fbDb.ref(`attendance/${typeKey}/${selectedZone}/${today}`);
+    const ts      = itemTimestamp ? new Date(itemTimestamp) : new Date();
+    const dateKey = `${ts.getFullYear()}-${String(ts.getMonth()+1).padStart(2,'0')}-${String(ts.getDate()).padStart(2,'0')}`;
+    const typeKey = getMeetingType(ts);
+    const zoneRef = _fbDb.ref(`attendance/${typeKey}/${selectedZone}/${dateKey}`);
     const snap    = await zoneRef.once('value');
     const entries = Object.values(snap.val() || {});
     const matches = entries.filter(e => e.tkn === tkn);
