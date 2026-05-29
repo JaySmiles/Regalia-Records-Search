@@ -18,7 +18,7 @@
 <script src="xlsx.full.min.js"></script>
 <style>
   /* ─────────────────────────────────────────
-     Regalia Attendance — Material You v1.8.13
+     Regalia Attendance — Material You v1.8.14
      Themes applied via JS setProperty()
   ───────────────────────────────────────── */
 
@@ -261,6 +261,8 @@
     border-radius: 6px; flex-shrink: 0;
   }
   .class-badge-default { color: var(--md-on-surf-v); background: var(--md-outline-v); }
+  .class-badge-first-visit  { color: var(--md-success); background: rgba(157,214,127,0.15); }
+  .class-badge-returning    { color: var(--md-primary); background: rgba(208,188,255,0.12); }
 
   @keyframes psephos-shimmer {
     0%   { background-position: 0% 50%; }
@@ -778,7 +780,7 @@
       <svg class="home-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
     </div>
   </div>
-  <div style="text-align:center;margin-top:24px;font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;">v1.8.13</div>
+  <div style="text-align:center;margin-top:24px;font-size:0.72rem;color:var(--muted);letter-spacing:0.05em;">v1.8.14</div>
   <div id="records-sync-status" style="text-align:center;font-size:0.7rem;margin-top:4px;font-family:'IBM Plex Mono',monospace;opacity:0;transition:opacity 0.4s;"></div>
 </div>
 <!-- ══════════════════════════════════════ -->
@@ -1018,6 +1020,7 @@
   <div class="success-name" id="ci-success-name"></div>
   <div class="success-label">Checked in successfully ✓</div>
   <div class="success-meta" id="ci-success-meta"></div>
+  <div id="ci-success-visitor-type" style="display:none;margin-top:6px;text-align:center;"></div>
 </div>
 
 
@@ -1064,10 +1067,19 @@
         <option value="checkin">In Person</option>
         <option value="stream">Stream</option>
       </select>
-      <select id="log-mode-filter" onchange="renderLog()">
+      <select id="log-mode-filter" onchange="renderLog(); const vs = document.getElementById('visitor-subfilter-row'); if(this.value === 'visitor'){ vs.style.display='flex'; } else { vs.style.display='none'; document.getElementById('log-visitor-subfilter').value=''; }">
         <option value="">Members &amp; Visitors</option>
         <option value="member">Members only</option>
         <option value="visitor">Visitors only</option>
+      </select>
+    </div>
+    
+    <div id="visitor-subfilter-row" class="log-filter-row" style="display:none; margin-top: 10px;">
+      <label style="font-size: 0.9rem; margin-right: 8px;">Visitor type:</label>
+      <select id="log-visitor-subfilter" onchange="renderLog()">
+        <option value="">All Visitors</option>
+        <option value="first">First Time</option>
+        <option value="returning">Returning</option>
       </select>
     </div>
 
@@ -1969,13 +1981,17 @@
     const typeFilter = document.getElementById('log-type-filter')?.value || '';
     const modeFilter = document.getElementById('log-mode-filter')?.value || '';
     const dateFilter = document.getElementById('log-date-filter')?.value || '';
+    const visitorSubFilter = document.getElementById('log-visitor-subfilter')?.value || '';
 
     let filtered = allEntries.filter(e => {
       const nameMatch = (e.name || '').toLowerCase().includes(q) ||
                         (e.tkn  || '').toLowerCase().includes(q);
       const typeMatch = !typeFilter || e.form === typeFilter;
       const modeMatch = !modeFilter || e.mode === modeFilter;
-      return nameMatch && typeMatch && modeMatch;
+      const visitorSubMatch = !visitorSubFilter || modeFilter !== 'visitor'
+        || (e.visitorType === visitorSubFilter)
+        || (!e.visitorType && visitorSubFilter === '');
+      return nameMatch && typeMatch && modeMatch && visitorSubMatch;
     });
 
     // Most recent first
@@ -2003,6 +2019,13 @@
     });
 
     list.innerHTML = filtered.map(e => {
+      const visitorTypeBadge = (e.mode === 'visitor' && e.visitorType)
+        ? `<span class="class-badge class-badge-${e.visitorType === 'first' ? 'first-visit' : 'returning'}">
+             ${e.visitorType === 'first' ? 'First Visit' : 'Returning Visitor'}
+           </span>`
+        : (e.mode === 'visitor'
+            ? `<span class="log-visitor-badge-placeholder" data-entry-id="${e.id}"></span>`
+            : '');
       const badge = e.form === 'checkin'
         ? '<span class="log-entry-badge checkin">In Person</span>'
         : '<span class="log-entry-badge stream">Stream</span>';
@@ -2024,9 +2047,12 @@
           ${clsBadge}
           <div class="log-entry-meta">${tknOrType} · ${fmtTime(e.timestamp)} ${submittedBy}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">${dupBadge}${ministerBadge}${badge}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">${dupBadge}${visitorTypeBadge}${ministerBadge}${badge}</div>
       </div>`;
     }).join('');
+
+    const _historicalVisitorScanQueue = filtered.filter(e => e.mode === 'visitor' && !e.visitorType);
+    if (_historicalVisitorScanQueue.length) runHistoricalVisitorScan(_historicalVisitorScanQueue);
   }
 
   // ── Shared XLSX save helper ──
@@ -2171,7 +2197,13 @@
     const metaText = `${fmtTime(timestamp)}  ·  ID: ${id.slice(0,8)}`;
     resetCheckin();
 
-    const logEntry = { id, form:'checkin', mode, name, tkn, cls, phone, invitedBy, timestamp, visitorName: mode === 'visitor' ? name : undefined };
+    let visitorType = '';
+    if (mode === 'visitor') {
+      visitorType = await determineVisitorType(name, phone, timestamp);
+    }
+    const logEntry = { id, form:'checkin', mode, name, tkn, cls, phone, invitedBy, timestamp,
+                       visitorName: mode === 'visitor' ? name : undefined,
+                       visitorType: visitorType || '' };
 
     if (!await isConnected()) {
       addToQueue({ id, form:'checkin', mode, name, tkn, fields, timestamp });
@@ -2195,6 +2227,20 @@
     addToLog(logEntry);
     document.getElementById('ci-success-name').textContent = name;
     document.getElementById('ci-success-meta').textContent = metaText;
+
+    if (mode === 'visitor') {
+      const vTypeBadgeEl = document.getElementById('ci-success-visitor-type');
+      if (vTypeBadgeEl) {
+        if (visitorType === 'first') {
+          vTypeBadgeEl.innerHTML = '<span class="class-badge class-badge-first-visit">First Visit</span>';
+        } else if (visitorType === 'returning') {
+          vTypeBadgeEl.innerHTML = '<span class="class-badge class-badge-returning">Returning Visitor</span>';
+        } else {
+          vTypeBadgeEl.innerHTML = '';
+        }
+        vTypeBadgeEl.style.display = visitorType ? 'block' : 'none';
+      }
+    }
     document.getElementById('checkin-success').classList.add('visible');
     setTimeout(() => { document.getElementById('checkin-success').classList.remove('visible'); }, 2500);
   }
@@ -2906,10 +2952,45 @@ pushToSharedLog = function(entry) {
     rep:            repName              || 'Unknown',
     zone:           zone,
     isMinistering:  entry.isMinistering  || false,
-    ministeringType:entry.ministeringType|| ''
+    ministeringType:entry.ministeringType|| '',
+    visitorType:    entry.visitorType    || ''
   }).catch(e => console.warn('Firebase push error:', e));
   if (dateKey === getTodayKey()) _zoneRef = ref;
 };
+
+async function determineVisitorType(name, phone, currentTimestamp) {
+  const normName  = (name  || '').trim().toLowerCase();
+  const normPhone = (phone || '').trim();
+  if (!normName || !normPhone) return 'first';
+
+  for (const key of Object.keys(_allFirebaseData)) {
+    const dateObj = _allFirebaseData[key];
+    if (!dateObj || typeof dateObj !== 'object') continue;
+    for (const entryId of Object.keys(dateObj)) {
+      const e = dateObj[entryId];
+      if (!e || !e.id || !e.timestamp || e.mode !== 'visitor') continue;
+      if (new Date(e.timestamp) >= new Date(currentTimestamp)) continue;
+      if ((e.name  || '').trim().toLowerCase() === normName &&
+          (e.phone || '').trim()               === normPhone) {
+        return 'returning';
+      }
+    }
+  }
+  return 'first';
+}
+
+async function runHistoricalVisitorScan(queue) {
+  for (const entry of queue) {
+    const vType = await determineVisitorType(entry.name, entry.phone, entry.timestamp);
+    if (!vType) continue;
+    const placeholder = document.querySelector(`.log-visitor-badge-placeholder[data-entry-id="${entry.id}"]`);
+    if (placeholder) {
+      const label = vType === 'first' ? 'First Visit' : 'Returning Visitor';
+      const cls   = vType === 'first' ? 'first-visit' : 'returning';
+      placeholder.outerHTML = `<span class="class-badge class-badge-${cls}">${label}</span>`;
+    }
+  }
+}
 
 findSharedDuplicate = function(form, mode, identifier) {
   return _sharedEntries.find(e =>
