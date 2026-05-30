@@ -57,8 +57,8 @@ jobs:
           NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
           # Update the version string in the HTML file
           sed -i "s/v[0-9]\+\.[0-9]\+\.[0-9]\+/v${NEW_VERSION}/" www/index.html
-          # Compute versionCode (offset 31 to ensure it's higher than previous manual 43)
-          CODE=$((NEW_PATCH + 31))
+          # Compute a strictly increasing versionCode incorporating major/minor/patch
+          CODE=$((MAJOR * 10000 + MINOR * 100 + NEW_PATCH))
           # Apply versionCode and versionName to Gradle
           sed -i "s/versionCode [0-9]*/versionCode ${CODE}/" android/app/build.gradle
           sed -i "s/versionName \"[^\"]*\"/versionName \"${NEW_VERSION}\"/" android/app/build.gradle
