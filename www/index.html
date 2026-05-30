@@ -2049,8 +2049,9 @@
           <div class="log-entry-name">${e.name}</div>
           ${clsBadge}
           <div class="log-entry-meta">${tknOrType} · ${fmtTime(e.timestamp)} ${submittedBy}</div>
+          ${visitorTypeBadge ? `<div style="margin-top:4px;">${visitorTypeBadge}</div>` : ''}
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">${dupBadge}${visitorTypeBadge}${ministerBadge}${badge}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">${dupBadge}${ministerBadge}${badge}</div>
       </div>`;
     }).join('');
 
