@@ -2967,6 +2967,18 @@ async function determineVisitorType(name, phone, currentTimestamp) {
   const normPhone = (phone || '').trim();
   if (!normName || !normPhone) return 'first';
 
+  // 1. Check local offline log first (handles same-session submissions instantly)
+  const { entries } = getLog();
+  for (const e of entries) {
+    if (!e || !e.id || !e.timestamp || e.mode !== 'visitor') continue;
+    if (new Date(e.timestamp) >= new Date(currentTimestamp)) continue;
+    if ((e.name  || '').trim().toLowerCase() === normName &&
+        (e.phone || '').trim()               === normPhone) {
+      return 'returning';
+    }
+  }
+
+  // 2. Check full Firebase history
   for (const key of Object.keys(_allFirebaseData)) {
     const dateObj = _allFirebaseData[key];
     if (!dateObj || typeof dateObj !== 'object') continue;
