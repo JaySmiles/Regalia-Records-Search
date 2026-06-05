@@ -1814,12 +1814,16 @@
     matches.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     const toDelete = matches.slice(1);
     for (const dup of toDelete) {
-      await zoneRef.child(dup.id).remove();
-      const log = getLog();
-      log.entries = log.entries.filter(e => e.id !== dup.id);
-      saveLog(log);
-      _sharedEntries = _sharedEntries.filter(e => e.id !== dup.id);
-      _skippedQueueIds.add(dup.id);
+      try {
+        await zoneRef.child(dup.id).remove();
+        // Only clean local state after confirmed Firebase delete
+        const log = getLog();
+        log.entries = log.entries.filter(e => e.id !== dup.id);
+        saveLog(log);
+        _sharedEntries = _sharedEntries.filter(e => e.id !== dup.id);
+      } catch(removeErr) {
+        console.warn('resolveTknDuplicate: failed to remove dup', dup.id, removeErr);
+      }
     }
     if (toDelete.length > 0 && typeof renderLog === 'function') renderLog();
     return toDelete.length;
@@ -1976,8 +1980,10 @@
       return entryDate === filterDate;
     });
     const localIds = new Set(local.map(e => e.id));
+    // Remote entries are authoritative Firebase records — always show them.
+    // _skippedQueueIds only suppresses locally-queued pending writes, not confirmed Firebase entries.
     const remote = _sharedEntries
-      .filter(e => e && e.id && e.timestamp && !localIds.has(e.id) && !_skippedQueueIds.has(e.id))
+      .filter(e => e && e.id && e.timestamp && !localIds.has(e.id))
       .map(e => ({ ...e, _remote: true }));
     return [...local, ...remote];
   }
@@ -2175,7 +2181,11 @@
   }
 
   // ── Check-in Submit ──
+  let _isSubmitting = false;
   async function submitCheckin(mode) {
+    if (_isSubmitting) return; // prevent triple-tap race
+    _isSubmitting = true;
+    try {
     let name, tkn = '', cls = '', phone = '', invitedBy = '', fields;
     const timestamp = new Date().toISOString();
     const id = genUUID();
@@ -2203,6 +2213,9 @@
       return;
     }
     doCheckinSubmit(mode, name, tkn, cls, phone, invitedBy, fields, timestamp, id);
+    } finally {
+      _isSubmitting = false;
+    }
   }
 
   async function doCheckinSubmit(mode, name, tkn, cls, phone, invitedBy, fields, timestamp, id) {
@@ -2945,7 +2958,8 @@ pushToSharedLog = function(entry) {
       log.entries = log.entries.filter(e => e.id !== entry.id);
       saveLog(log);
       saveQueue(getQueue().filter(q => q.id !== entry.id));
-      _skippedQueueIds.add(existing.id);
+      // Suppress our OWN pending write - NOT the existing valid Firebase entry
+      _skippedQueueIds.add(entry.id);
       return;
     }
   }
