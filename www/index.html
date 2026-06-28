@@ -2058,11 +2058,13 @@
       const tknOrType = e.mode === 'member' ? `TKN: ${e.tkn}` : `Visitor`;
       const submittedBy = e.rep ? `· <span style="color:var(--muted);">by ${e.rep}</span>` : '';
       const clsBadge = e.cls ? `<div style="margin-top:3px;">${getClassBadge(e.cls)}</div>` : '';
+      const invitedByStr = e.invitedBy ? `<div style="font-size:11px;color:var(--md-on-surf-v);margin-top:2px;">Invited by: ${e.invitedBy}</div>` : '';
       return `<div class="log-entry" style="${isDuplicate ? 'background:rgba(242,139,130,0.12);border:1px solid rgba(242,139,130,0.5);' : ''}">
         <div class="log-entry-info">
           <div class="log-entry-name">${e.name}</div>
           ${clsBadge}
           <div class="log-entry-meta">${tknOrType} · ${fmtTime(e.timestamp)} ${submittedBy}</div>
+          ${invitedByStr}
           ${visitorTypeBadge ? `<div style="margin-top:4px;">${visitorTypeBadge}</div>` : ''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">${dupBadge}${ministerBadge}${badge}</div>
