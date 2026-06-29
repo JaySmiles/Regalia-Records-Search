@@ -37,7 +37,12 @@ with open(index_path, "w", encoding="utf-8") as f:
     f.write(html_cleaned)
 
 # 5. Add Android platform if it doesn't exist
-if not os.path.exists("android"):
+if not os.path.exists(os.path.join("android", "app", "build.gradle")):
+    if os.path.exists("android"):
+        try:
+            shutil.rmtree("android")
+        except Exception:
+            pass
     print("Adding Android platform...")
     subprocess.run("npx cap add android", shell=True, check=True)
 else:
