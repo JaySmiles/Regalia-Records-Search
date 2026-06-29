@@ -43,8 +43,8 @@ if not os.path.exists("android"):
 else:
     print("Android platform already exists.")
 
-# 6. Parse version and update Gradle
-print("Syncing version details to Gradle...")
+# 6. Parse, increment, and update version in index.html and Gradle
+print("Incrementing version and syncing to HTML/Gradle...")
 with open(index_path, "r", encoding="utf-8") as f:
     content = f.read()
 m = re.search(r'v(\d+)\.(\d+)\.(\d+)', content)
@@ -52,10 +52,25 @@ if not m:
     print("Error: Could not find version pattern (vX.Y.Z) in index.html")
     sys.exit(1)
 
-major, minor, patch = m.group(1), m.group(2), m.group(3)
-version_name = f"{major}.{minor}.{patch}"
-version_code = int(major) * 10000 + int(minor) * 100 + int(patch)
-print(f"Detected Version: {version_name} (Code: {version_code})")
+major = int(m.group(1))
+minor = int(m.group(2))
+patch = int(m.group(3))
+
+# Increment patch version
+new_patch = patch + 1
+new_version_name = f"{major}.{minor}.{new_patch}"
+new_version_code = major * 10000 + minor * 100 + new_patch
+
+# Update HTML content with new version
+updated_content = re.sub(r'v\d+\.\d+\.\d+', f'v{new_version_name}', content)
+with open(index_path, "w", encoding="utf-8") as f:
+    f.write(updated_content)
+
+print(f"Bumped Version: {new_version_name} (Code: {new_version_code})")
+
+# Use these for building
+version_name = new_version_name
+version_code = new_version_code
 
 gradle_path = os.path.join("android", "app", "build.gradle")
 with open(gradle_path, "r", encoding="utf-8") as f:
@@ -148,8 +163,30 @@ subprocess.run(cmd, check=True)
 
 # 12. Copy output APK to repository root
 os.chdir(repo_dir)
+
+# Get custom description from command line arguments or fallback to git commit message
+desc = ""
+if len(sys.argv) > 1:
+    desc = sys.argv[1].strip()
+else:
+    try:
+        git_desc = subprocess.check_output("git log -1 --pretty=%B", shell=True).decode("utf-8").strip()
+        desc = git_desc.replace('\n', ' ').strip()
+    except Exception:
+        pass
+
+# Sanitize description for filename
+if desc:
+    # Remove characters that are illegal in Windows filenames: \ / : * ? " < > |
+    desc = re.sub(r'[\x00-\x1f\\/:*?"<>|]', '', desc)
+    # limit length to avoid too long filename errors
+    desc = desc[:80].strip()
+    suffix = f" - {desc}"
+else:
+    suffix = ""
+
 src_apk = os.path.join("android", "app", "build", "outputs", "apk", "release", "app-release.apk")
-dest_apk = os.path.join(repo_dir, f"Regalia-Records-v{version_name}.apk")
+dest_apk = os.path.join(repo_dir, f"Regalia-Records-v{version_name}{suffix}.apk")
 if os.path.exists(src_apk):
     shutil.copy(src_apk, dest_apk)
     print(f"BUILD SUCCESS! APK generated at: {dest_apk}")
