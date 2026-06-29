@@ -166,7 +166,7 @@ cmd = [
 ]
 subprocess.run(cmd, check=True)
 
-# 12. Copy output APK to repository root
+# 12. Copy output APK to Apks directory
 os.chdir(repo_dir)
 
 # Get custom description from command line arguments or fallback to git commit message
@@ -190,8 +190,9 @@ if desc:
 else:
     suffix = ""
 
+os.makedirs("Apks", exist_ok=True)
 src_apk = os.path.join("android", "app", "build", "outputs", "apk", "release", "app-release.apk")
-dest_apk = os.path.join(repo_dir, f"Regalia-Records-v{version_name}{suffix}.apk")
+dest_apk = os.path.join("Apks", f"Regalia-Records-v{version_name}{suffix}.apk")
 if os.path.exists(src_apk):
     shutil.copy(src_apk, dest_apk)
     print(f"BUILD SUCCESS! APK generated at: {dest_apk}")
